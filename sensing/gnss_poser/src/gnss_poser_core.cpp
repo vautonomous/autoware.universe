@@ -36,6 +36,10 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
     declare_parameter("coordinate_system", static_cast<int>(CoordinateSystem::MGRS));
   coordinate_system_ = static_cast<CoordinateSystem>(coordinate_system);
 
+  nav_sat_fix_origin.latitude = declare_parameter("latitude", 0.0);
+  nav_sat_fix_origin.longitude = declare_parameter("longitude", 0.0);
+  nav_sat_fix_origin.altitude = declare_parameter("altitude", 0.0);
+
   int buff_epoch = declare_parameter("buff_epoch", 1);
   position_buffer_.set_capacity(buff_epoch);
 
@@ -125,15 +129,23 @@ void GNSSPoser::callbackNavSatFix(
   geometry_msgs::msg::PoseWithCovarianceStamped gnss_base_pose_cov_msg;
   gnss_base_pose_cov_msg.header = gnss_base_pose_msg.header;
   gnss_base_pose_cov_msg.pose.pose = gnss_base_pose_msg.pose;
-  gnss_base_pose_cov_msg.pose.covariance[6 * 0 + 0] =
-    canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[0] : 10.0;
-  gnss_base_pose_cov_msg.pose.covariance[6 * 1 + 1] =
-    canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[4] : 10.0;
-  gnss_base_pose_cov_msg.pose.covariance[6 * 2 + 2] =
-    canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[8] : 10.0;
-  gnss_base_pose_cov_msg.pose.covariance[6 * 3 + 3] = 0.1;
-  gnss_base_pose_cov_msg.pose.covariance[6 * 4 + 4] = 0.1;
-  gnss_base_pose_cov_msg.pose.covariance[6 * 5 + 5] = 1.0;
+//  gnss_base_pose_cov_msg.pose.covariance[6 * 0 + 0] =
+//    canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[0] : 10.0;
+//  gnss_base_pose_cov_msg.pose.covariance[6 * 1 + 1] =
+//    canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[4] : 10.0;
+//  gnss_base_pose_cov_msg.pose.covariance[6 * 2 + 2] =
+//    canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[8] : 10.0;
+//  gnss_base_pose_cov_msg.pose.covariance[6 * 3 + 3] = 0.1;
+//  gnss_base_pose_cov_msg.pose.covariance[6 * 4 + 4] = 0.1;
+//  gnss_base_pose_cov_msg.pose.covariance[6 * 5 + 5] = 1.0;
+
+
+    gnss_base_pose_cov_msg.pose.covariance[6 * 0 + 0] = nav_sat_fix_msg_ptr->position_covariance[0];
+    gnss_base_pose_cov_msg.pose.covariance[6 * 1 + 1] = nav_sat_fix_msg_ptr->position_covariance[1];
+    gnss_base_pose_cov_msg.pose.covariance[6 * 2 + 2] = nav_sat_fix_msg_ptr->position_covariance[2];
+    gnss_base_pose_cov_msg.pose.covariance[6 * 3 + 3] = nav_sat_fix_msg_ptr->position_covariance[3];
+    gnss_base_pose_cov_msg.pose.covariance[6 * 4 + 4] = nav_sat_fix_msg_ptr->position_covariance[4];
+    gnss_base_pose_cov_msg.pose.covariance[6 * 5 + 5] = nav_sat_fix_msg_ptr->position_covariance[5];
   pose_cov_pub_->publish(gnss_base_pose_cov_msg);
 
   // broadcast map to gnss_base_link
@@ -166,6 +178,8 @@ GNSSStat GNSSPoser::convert(
     gnss_stat = NavSatFix2MGRS(nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger());
   } else if (coordinate_system == CoordinateSystem::PLANE) {
     gnss_stat = NavSatFix2PLANE(nav_sat_fix_msg, plane_zone_, this->get_logger());
+  } else if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN) {
+    gnss_stat = NavSatFix2LocalCartesian(nav_sat_fix_msg, nav_sat_fix_origin, this->get_logger());
   } else {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
