@@ -577,6 +577,7 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
   const auto vehicle_info = vehicle_info_;
   const auto stop_param = stop_param_;
   const double current_acc = current_acc_;
+  obstacle_ros_pointcloud_ptr_ = std::make_shared<sensor_msgs::msg::PointCloud2>();
   const auto obstacle_ros_pointcloud_ptr = obstacle_ros_pointcloud_ptr_;
   mutex_.unlock();
 

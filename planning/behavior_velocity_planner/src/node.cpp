@@ -214,12 +214,12 @@ bool BehaviorVelocityPlannerNode::isDataReady(const PlannerData planner_data) co
   if (!d.current_accel) {
     return false;
   }
-  if (!d.predicted_objects) {
-    return false;
-  }
-  if (!d.no_ground_pointcloud) {
-    return false;
-  }
+//  if (!d.predicted_objects) {
+//    return false;
+//  }
+//  if (!d.no_ground_pointcloud) {
+//    return false;
+//  }
   if (!d.route_handler_) {
     return false;
   }
