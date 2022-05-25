@@ -56,7 +56,6 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             {
                 "lanelet2_map_path": LaunchConfiguration("lanelet2_map_path"),
-                "lanelet2_map_projector_type": "UTM",  # Options: MGRS, UTM
             },
             lanelet2_map_loader_param,
         ],
