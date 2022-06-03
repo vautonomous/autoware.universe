@@ -5,7 +5,7 @@
   <arg name="output/pointcloud" default="downsample/pointcloud" description="final output topic name"/>
 
   <!-- container -->
-  <arg name="container" default="/sensing/lidar/top/pointcloud_preprocessor/velodyne_node_container" description="container name"/>
+  <arg name="container" default="/sensing/lidar/right/pointcloud_preprocessor/velodyne_node_container" description="container name"/>
 
   <!-- option -->
   <arg name="use_intra_process" default="true" description="use ROS2 component container communication"/>
