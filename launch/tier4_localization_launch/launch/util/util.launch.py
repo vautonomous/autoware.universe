@@ -119,7 +119,7 @@ def generate_launch_description():
     add_launch_arg("use_intra_process", "true", "use ROS2 component container communication")
     add_launch_arg(
         "container",
-        "/sensing/lidar/right/pointcloud_preprocessor/velodyne_node_container",
+        "/sensing/lidar/pointcloud_preprocessor/pointcloud_preprocessor_container",
         "container name",
     )
     add_launch_arg(
