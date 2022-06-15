@@ -16,6 +16,7 @@
 
 #include <rclcpp/logging.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 
 #include <algorithm>
 #include <functional>
@@ -80,6 +81,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
     this, get_clock(), period_tf_ns, std::bind(&EKFLocalizer::timerTFCallback, this));
 
   pub_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("ekf_pose", 1);
+  pub_debug_marker_ = create_publisher<visualization_msgs::msg::Marker>("debug_pose_marker", 1);
   pub_pose_cov_ =
     create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("ekf_pose_with_covariance", 1);
   pub_odom_ = create_publisher<nav_msgs::msg::Odometry>("ekf_odom", 1);
@@ -108,6 +110,8 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   /* debug */
   pub_debug_ = create_publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>("debug", 1);
   pub_measured_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("debug/measured_pose", 1);
+
+  marker_debug_pose_.points.clear();
 }
 
 /*
@@ -657,6 +661,35 @@ void EKFLocalizer::publishEstimateResult()
 
   /* publish latest pose */
   pub_pose_->publish(current_ekf_pose_);
+
+  marker_debug_pose_.header.frame_id = "map";
+
+  marker_debug_pose_.ns = "debug pose line";
+  marker_debug_pose_.id = 43436;
+  marker_debug_pose_.lifetime = rclcpp::Duration::from_seconds(0);
+  marker_debug_pose_.type = visualization_msgs::msg::Marker::LINE_STRIP;
+  marker_debug_pose_.action = visualization_msgs::msg::Marker::ADD;
+  marker_debug_pose_.pose.position.x = 0;
+  marker_debug_pose_.pose.position.y = 0;
+  marker_debug_pose_.pose.position.z = 0;
+  marker_debug_pose_.pose.orientation.x = 0.0;
+  marker_debug_pose_.pose.orientation.y = 0.0;
+  marker_debug_pose_.pose.orientation.z = 0.0;
+  marker_debug_pose_.pose.orientation.w = 1.0;
+  marker_debug_pose_.scale.x = 0.1;
+  marker_debug_pose_.color.a = 0.999;  // Don't forget to set the alpha!
+  marker_debug_pose_.color.r = 0.0;
+  marker_debug_pose_.color.g = 1.0;
+  marker_debug_pose_.color.b = 0.0;
+
+  geometry_msgs::msg::Point point;
+  point.x = current_ekf_pose_.pose.position.x;
+  point.y = current_ekf_pose_.pose.position.y;
+  point.z = current_ekf_pose_.pose.position.z;
+  marker_debug_pose_.points.push_back(point);
+
+  pub_debug_marker_->publish(marker_debug_pose_);
+
   pub_pose_no_yawbias_->publish(current_ekf_pose_no_yawbias_);
 
   /* publish latest pose with covariance */

@@ -28,6 +28,7 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 #include <tier4_debug_msgs/msg/float64_multi_array_stamped.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
@@ -46,6 +47,8 @@ class EKFLocalizer : public rclcpp::Node
 {
 public:
   EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & options);
+
+  visualization_msgs::msg::Marker marker_debug_pose_;
 
 private:
   //!< @brief ekf estimated pose publisher
@@ -69,6 +72,9 @@ private:
   //!< @brief ekf estimated yaw bias publisher
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     pub_pose_cov_no_yawbias_;
+  //!< @brief debug marker publisher
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr
+    pub_debug_marker_;
   //!< @brief initial pose subscriber
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;
   //!< @brief measurement pose with covariance subscriber
