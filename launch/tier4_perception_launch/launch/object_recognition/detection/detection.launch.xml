@@ -5,12 +5,8 @@
 
   <!-- lidar param -->
   <arg name="input/pointcloud"/>
+  <arg name="mode" description="options: `camera_lidar_fusion`, `lidar` or `camera`"/>
   <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`"/>
-  <arg name="use_pointcloud_map" default="true" description="use pointcloud map in detection"/>
-  <arg name="use_pointcloud_container" default="false" description="use pointcloud container for detection preprocessor"/>
-  <arg name="container_name" default="pointcloud_container"/>
-
-  <!-- camera param -->
   <arg name="image_raw0" default="/image_raw" description="image raw topic name"/>
   <arg name="camera_info0" default="/camera_info" description="camera info topic name"/>
   <arg name="image_raw1" default=""/>
