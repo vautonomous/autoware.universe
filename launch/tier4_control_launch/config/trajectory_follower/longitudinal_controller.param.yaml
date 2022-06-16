@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     longitudinal_ctrl_period: 0.03  # control period [s]
-    delay_compensation_time: 0.17
+    delay_compensation_time: 0.001
 
     enable_smooth_stop: true
     enable_overshoot_emergency: true
@@ -19,8 +19,8 @@
     emergency_state_traj_rot_dev: 0.7
 
     # drive state
-    kp: 3.0
-    ki: 0.1
+    kp: 0.2
+    ki: 0.0
     kd: 0.0
     max_out: 1.0
     min_out: -1.0
@@ -59,12 +59,12 @@
     emergency_jerk: -3.0
 
     # acceleration limit
-    max_acc: 3.0
-    min_acc: -5.0
+    max_acc: 0.9
+    min_acc: -0.9
 
     # jerk limit
-    max_jerk: 2.0
-    min_jerk: -5.0
+    max_jerk: 0.6
+    min_jerk: -0.6
 
     # pitch
     use_trajectory_for_pitch_calculation: false
