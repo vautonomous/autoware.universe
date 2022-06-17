@@ -5,5 +5,5 @@
 
     # -- algorithm --
     lookahead_distance_ratio: 2.2
-    min_lookahead_distance: 2.5
+    min_lookahead_distance: 4.0
     reverse_min_lookahead_distance: 7.0
