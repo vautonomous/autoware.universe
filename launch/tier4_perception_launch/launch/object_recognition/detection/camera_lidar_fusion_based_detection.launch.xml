@@ -142,7 +142,7 @@
       <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
       <arg name="output/objects" value="objects"/>
       <arg name="score_threshold" value="0.75"/>
-      <arg name="densification_num_past_frames" value="     "/>
+      <arg name="densification_num_past_frames" value="1"/>
     </include>
   </group>
 
