@@ -6,5 +6,5 @@
     <arg name="output_twist_with_covariance_raw_topic" value="/localization/twist_estimator/twist_with_covariance_raw"/>
   </include>
 
-  <include file="$(find-pkg-share vehicle_velocity_converter)/launch/vehicle_velocity_converter.launch.xml"/>
+<!--  <include file="$(find-pkg-share vehicle_velocity_converter)/launch/vehicle_velocity_converter.launch.xml"/>-->
 </launch>
