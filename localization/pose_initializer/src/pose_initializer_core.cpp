@@ -240,6 +240,12 @@ bool PoseInitializer::callAlignServiceAndPublishResult(
   pose_with_cov.pose.covariance[4 * 6 + 4] = 0.01;
   pose_with_cov.pose.covariance[5 * 6 + 5] = 0.2;
   initial_pose_pub_->publish(pose_with_cov);
+
+  for (int i = 0; i < 10; ++i) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    initial_pose_pub_->publish(pose_with_cov);
+  }
+
   enable_gnss_callback_ = false;
 
   return true;
