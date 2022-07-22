@@ -316,5 +316,7 @@ private:
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
 
   friend class EKFLocalizerTestSuite;  // for test code
+
+  geometry_msgs::msg::PoseWithCovarianceStamped pose_debug;
 };
 #endif  // EKF_LOCALIZER__EKF_LOCALIZER_HPP_

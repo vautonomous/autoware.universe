@@ -337,6 +337,7 @@ void EKFLocalizer::callbackInitialPose(
 void EKFLocalizer::callbackPoseWithCovariance(
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
 {
+  pose_debug = *msg;
   PoseInfo pose_info = {msg, 0, pose_smoothing_steps_};
   current_pose_info_queue_.push(pose_info);
 
@@ -676,6 +677,8 @@ void EKFLocalizer::publishEstimateResult()
   ekf_.getLatestP(P);
 
   /* publish latest pose */
+  current_ekf_pose_.pose.orientation = pose_debug.pose.pose.orientation;
+  current_ekf_pose_no_yawbias_.pose.orientation = pose_debug.pose.pose.orientation;
   pub_pose_->publish(current_ekf_pose_);
   pub_pose_no_yawbias_->publish(current_ekf_pose_no_yawbias_);
 
