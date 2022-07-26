@@ -681,6 +681,8 @@ void EKFLocalizer::publishEstimateResult()
     is_init=2;
   }
   else if(is_init == 2) {
+    current_ekf_pose_.pose.position = pose_debug.pose.pose.position;
+    current_ekf_pose_no_yawbias_.pose.position = pose_debug.pose.pose.position;
     current_ekf_pose_.pose.orientation = pose_debug.pose.pose.orientation;
     current_ekf_pose_no_yawbias_.pose.orientation = pose_debug.pose.pose.orientation;
   }
