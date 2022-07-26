@@ -295,6 +295,7 @@ bool EKFLocalizer::getTransformFromTF(
 void EKFLocalizer::callbackInitialPose(
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr initialpose)
 {
+  is_init = 1;
   geometry_msgs::msg::TransformStamped transform;
   if (!getTransformFromTF(pose_frame_id_, initialpose->header.frame_id, transform)) {
     RCLCPP_ERROR(
@@ -676,9 +677,15 @@ void EKFLocalizer::publishEstimateResult()
   ekf_.getLatestX(X);
   ekf_.getLatestP(P);
 
+  if(is_init == 1) {
+    is_init=2;
+  }
+  else if(is_init == 2) {
+    current_ekf_pose_.pose.orientation = pose_debug.pose.pose.orientation;
+    current_ekf_pose_no_yawbias_.pose.orientation = pose_debug.pose.pose.orientation;
+  }
+
   /* publish latest pose */
-  current_ekf_pose_.pose.orientation = pose_debug.pose.pose.orientation;
-  current_ekf_pose_no_yawbias_.pose.orientation = pose_debug.pose.pose.orientation;
   pub_pose_->publish(current_ekf_pose_);
   pub_pose_no_yawbias_->publish(current_ekf_pose_no_yawbias_);
 
@@ -704,6 +711,8 @@ void EKFLocalizer::publishEstimateResult()
 
   /* publish latest twist */
   pub_twist_->publish(current_ekf_twist_);
+
+
 
   /* publish latest twist with covariance */
   geometry_msgs::msg::TwistWithCovarianceStamped twist_cov;

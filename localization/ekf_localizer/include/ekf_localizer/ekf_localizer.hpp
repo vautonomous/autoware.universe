@@ -318,5 +318,6 @@ private:
   friend class EKFLocalizerTestSuite;  // for test code
 
   geometry_msgs::msg::PoseWithCovarianceStamped pose_debug;
+  float is_init = 0;
 };
 #endif  // EKF_LOCALIZER__EKF_LOCALIZER_HPP_
