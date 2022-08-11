@@ -18,23 +18,26 @@
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 
-namespace transformation_origin_calibration
-{
-class TransformationOriginCalibration : public rclcpp::Node
-{
-public:
-  explicit TransformationOriginCalibration(const rclcpp::NodeOptions & node_options);
+namespace transformation_origin_calibration {
+    class TransformationOriginCalibration : public rclcpp::Node {
+    public:
+        explicit TransformationOriginCalibration(const rclcpp::NodeOptions &node_options);
 
-private:
-  rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr pub_transformation_origin_calibration_;
-  geometry_msgs::msg::TransformStamped transformation_origin_calibration_;
+    private:
+        rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr pub_transformation_origin_calibration_;
 
-    double x_;
-    double y_;
-    double z_;
+        rclcpp::TimerBase::SharedPtr timer_;
+
+        void timer_callback();
+
+        geometry_msgs::msg::TransformStamped transformation_origin_calibration_;
+
+        double x_;
+        double y_;
+        double z_;
 
 
-};
+    };
 }  // namespace gnss_poser
 
 #endif  // GNSS_POSER__GNSS_POSER_CORE_HPP_

@@ -4,5 +4,7 @@
 
   <node pkg="transformation_origin_calibration" exec="transformation_origin_calibration" name="transformation_origin_calibration" output="screen">
     <param from="$(var param_file)"/>
+    <remap from="transformation_origin_calibration" to="sensing/gnss/transformation_origin_calibration" />
+
   </node>
 </launch>

@@ -40,6 +40,7 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
                   "transformation_origin_calibration",rclcpp::QoS{1},
                   std::bind(&GNSSPoser::callback_transformation_origin_calibration, this, std::placeholders::_1)))
 {
+  transformation_origin_calibration_.transform.rotation.w = 1.0;
   int coordinate_system =
     declare_parameter("coordinate_system", static_cast<int>(CoordinateSystem::MGRS));
   coordinate_system_ = static_cast<CoordinateSystem>(coordinate_system);
