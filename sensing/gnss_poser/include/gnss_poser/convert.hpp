@@ -25,7 +25,11 @@
 
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
+#include <geometry_msgs/msg/transform_stamped.hpp>
+
 #include <string>
+#include <Eigen/Geometry>
+#include <tf2_eigen/tf2_eigen.h>
 
 namespace gnss_poser
 {
@@ -101,7 +105,9 @@ GNSSStat NavSatFix2UTM(
 }
 GNSSStat NavSatFix2LocalCartesianUTM(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
-  sensor_msgs::msg::NavSatFix nav_sat_fix_origin, const rclcpp::Logger & logger)
+  sensor_msgs::msg::NavSatFix nav_sat_fix_origin,
+  const geometry_msgs::msg::TransformStamped& transformation_origin_calibration,
+  const rclcpp::Logger & logger)
 {
   GNSSStat utm_local;
   utm_local.coordinate_system = CoordinateSystem::UTM;
@@ -112,7 +118,8 @@ GNSSStat NavSatFix2LocalCartesianUTM(
     GeographicLib::UTMUPS::Forward(
       nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude, utm_origin.zone,
       utm_origin.northup, utm_origin.x, utm_origin.y);
-    utm_origin.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_origin, logger);
+//    utm_origin.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_origin, logger);
+    utm_origin.z = nav_sat_fix_origin.altitude;
     // individual coordinates of global coordinate system
     double global_x = 0.0;
     double global_y = 0.0;
@@ -122,10 +129,20 @@ GNSSStat NavSatFix2LocalCartesianUTM(
     utm_local.latitude = nav_sat_fix_msg.latitude;
     utm_local.longitude = nav_sat_fix_msg.longitude;
     utm_local.altitude = nav_sat_fix_msg.altitude;
+
+    // transform origin by the calibration matrix
+    Eigen::Affine3d affine_trans_calib;
+    affine_trans_calib = tf2::transformToEigen(transformation_origin_calibration.transform);
+
+    Eigen::Vector4d origin(utm_origin.x,utm_origin.y,utm_origin.z,1.0);
+
+    Eigen::Vector4d origin_trans = affine_trans_calib * origin;
+
     // individual coordinates of local coordinate system
-    utm_local.x = global_x - utm_origin.x;
-    utm_local.y = global_y - utm_origin.y;
-    utm_local.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger) - utm_origin.z;
+    utm_local.x = global_x - origin_trans.x();
+    utm_local.y = global_y - origin_trans.y();
+//    utm_local.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger) - utm_origin.z;
+    utm_local.z = nav_sat_fix_msg.altitude - origin_trans.z();
   } catch (const GeographicLib::GeographicErr & err) {
     RCLCPP_ERROR_STREAM(
       logger, "Failed to convert from LLH to UTM in local coordinates" << err.what());

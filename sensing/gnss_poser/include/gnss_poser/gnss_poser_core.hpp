@@ -49,6 +49,9 @@ public:
 
 private:
   void callbackNavSatFix(const sensor_msgs::msg::NavSatFix::ConstSharedPtr nav_sat_fix_msg_ptr);
+  void callback_transformation_origin_calibration(
+          const geometry_msgs::msg::TransformStamped::ConstSharedPtr
+          msg_transformation_origin_calibration);
   void callbackGnssInsOrientationStamped(
     const autoware_sensing_msgs::msg::GnssInsOrientationStamped::ConstSharedPtr msg);
 
@@ -101,6 +104,11 @@ private:
 
   autoware_sensing_msgs::msg::GnssInsOrientationStamped::SharedPtr
     msg_gnss_ins_orientation_stamped_;
+
+  rclcpp::Subscription<geometry_msgs::msg::TransformStamped>::SharedPtr
+          sub_transformation_origin_calibration_;
+
+  geometry_msgs::msg::TransformStamped transformation_origin_calibration_;
 };
 }  // namespace gnss_poser
 

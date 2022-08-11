@@ -34,7 +34,11 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   use_gnss_ins_orientation_(declare_parameter("use_gnss_heading", true)),
   plane_zone_(declare_parameter<int>("plane_zone", 9)),
   msg_gnss_ins_orientation_stamped_(
-    std::make_shared<autoware_sensing_msgs::msg::GnssInsOrientationStamped>())
+    std::make_shared<autoware_sensing_msgs::msg::GnssInsOrientationStamped>()),
+  sub_transformation_origin_calibration_(
+          this->create_subscription<geometry_msgs::msg::TransformStamped>(
+                  "transformation_origin_calibration",rclcpp::QoS{1},
+                  std::bind(&GNSSPoser::callback_transformation_origin_calibration, this, std::placeholders::_1)))
 {
   int coordinate_system =
     declare_parameter("coordinate_system", static_cast<int>(CoordinateSystem::MGRS));
@@ -186,7 +190,8 @@ GNSSStat GNSSPoser::convert(
     gnss_stat = NavSatFix2UTM(nav_sat_fix_msg, this->get_logger());
   } else if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN_UTM) {
     gnss_stat =
-      NavSatFix2LocalCartesianUTM(nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger());
+      NavSatFix2LocalCartesianUTM(nav_sat_fix_msg, nav_sat_fix_origin_,
+                                  transformation_origin_calibration_, this->get_logger());
   } else if (coordinate_system == CoordinateSystem::MGRS) {
     gnss_stat = NavSatFix2MGRS(nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger());
   } else if (coordinate_system == CoordinateSystem::PLANE) {
@@ -374,6 +379,12 @@ void GNSSPoser::publishTF(
   transform_stamped.transform.rotation.w = tf_quaternion.w();
 
   tf2_broadcaster_.sendTransform(transform_stamped);
+}
+
+void GNSSPoser::callback_transformation_origin_calibration(
+        const geometry_msgs::msg::TransformStamped::ConstSharedPtr
+        msg_transformation_origin_calibration) {
+  transformation_origin_calibration_ = *msg_transformation_origin_calibration;
 }
 }  // namespace gnss_poser
 
