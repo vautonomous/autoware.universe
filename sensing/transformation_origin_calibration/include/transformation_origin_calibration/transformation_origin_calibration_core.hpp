@@ -28,6 +28,12 @@ public:
 private:
   rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr pub_transformation_origin_calibration_;
   geometry_msgs::msg::TransformStamped transformation_origin_calibration_;
+
+    double x_;
+    double y_;
+    double z_;
+
+
 };
 }  // namespace gnss_poser
 
