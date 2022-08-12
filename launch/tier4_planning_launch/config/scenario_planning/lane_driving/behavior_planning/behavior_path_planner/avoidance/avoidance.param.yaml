@@ -52,10 +52,10 @@
         truck: true
         bus: true
         trailer: true
-        unknown: false
+        unknown: true
         bicycle: false
         motorcycle: false
-        pedestrian: false
+        pedestrian: true
 
       # ---------- advanced parameters ----------
       avoidance_execution_lateral_threshold: 0.499
