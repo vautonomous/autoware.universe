@@ -33,7 +33,7 @@
       # param for target area & object
       crosswalk_attention_range: 1.0 # [m] the detection area is defined as -X meters before the crosswalk to +X meters behind the crosswalk
       target_object:
-        unknown: true # [-] whether to look and stop by UNKNOWN objects
+        unknown: false # [-] whether to look and stop by UNKNOWN objects
         bicycle: true # [-] whether to look and stop by BICYCLE objects
         motorcycle: true # [-] whether to look and stop by MOTORCYCLE objects (tmp: currently it is difficult for perception modules to detect bicycles and motorcycles separately.)
         pedestrian: true # [-] whether to look and stop by PEDESTRIAN objects
