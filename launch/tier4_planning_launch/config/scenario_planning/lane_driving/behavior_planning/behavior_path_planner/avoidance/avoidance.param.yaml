@@ -26,8 +26,8 @@
 
       road_shoulder_safety_margin: 0.5 # [m]
 
-      max_right_shift_length: 5.0
-      max_left_shift_length: 5.0
+      max_right_shift_length: 0.3 # [m]
+      max_left_shift_length: 0.3  # [m]
 
       nominal_lateral_jerk: 0.2   # [m/s3]
       max_lateral_jerk: 1.0       # [m/s3]
