@@ -95,6 +95,8 @@ void Lanelet2MapVisualizationNode::onMapBin(
   lanelet::ConstLanelets shoulder_lanelets = lanelet::utils::query::shoulderLanelets(all_lanelets);
   lanelet::ConstLanelets crosswalk_lanelets =
     lanelet::utils::query::crosswalkLanelets(all_lanelets);
+  lanelet::ConstLanelets speed_bump_lanelets =
+    lanelet::utils::query::speedBumpLanelets(all_lanelets);
   lanelet::ConstLineStrings3d partitions = lanelet::utils::query::getAllPartitions(viz_lanelet_map);
   lanelet::ConstLineStrings3d pedestrian_markings =
     lanelet::utils::query::getAllPedestrianMarkings(viz_lanelet_map);
@@ -127,6 +129,7 @@ void Lanelet2MapVisualizationNode::onMapBin(
   setColor(&cl_road, 0.27, 0.27, 0.27, 0.999);
   setColor(&cl_shoulder, 0.15, 0.15, 0.15, 0.999);
   setColor(&cl_cross, 0.27, 0.3, 0.27, 0.5);
+  setColor(&cl_speed_bump, 0.56, 0.40, 0.27, 0.5);
   setColor(&cl_partitions, 0.25, 0.25, 0.25, 0.999);
   setColor(&cl_pedestrian_markings, 0.5, 0.5, 0.5, 0.999);
   setColor(&cl_ll_borders, 0.5, 0.5, 0.5, 0.999);
@@ -158,6 +161,9 @@ void Lanelet2MapVisualizationNode::onMapBin(
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
                          "crosswalk_lanelets", crosswalk_lanelets, cl_cross));
+  insertMarkerArray(
+    &map_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
+                         "speed_bump_lanelets", speed_bump_lanelets, cl_speed_bump));
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::pedestrianMarkingsAsMarkerArray(
                          pedestrian_markings, cl_pedestrian_markings));
