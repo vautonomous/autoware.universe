@@ -17,25 +17,25 @@
     qp_solver_type: "osqp"                       # optimization solver option (unconstraint_fast or osqp)
     mpc_prediction_horizon: 30                   # prediction horizon step
     mpc_prediction_dt: 0.1                       # prediction horizon period [s]
-    mpc_weight_lat_error: 2.5                    # lateral error weight in matrix Q
+    mpc_weight_lat_error: 50.5                    # lateral error weight in matrix Q
     mpc_weight_heading_error: 0.0                # heading error weight in matrix Q
     mpc_weight_heading_error_squared_vel: 5.0    # heading error * velocity weight in matrix Q
     mpc_weight_steering_input: 0.7               # steering error weight in matrix R
     mpc_weight_steering_input_squared_vel: 0.25  # steering error * velocity weight in matrix R
     mpc_weight_lat_jerk: 0.0                     # lateral jerk weight in matrix R
-    mpc_weight_steer_rate: 0.05                   # steering rate weight in matrix R
+    mpc_weight_steer_rate: 0.3                   # steering rate weight in matrix R
     mpc_weight_steer_acc: 0.000001               # steering angular acceleration weight in matrix R
-    mpc_low_curvature_weight_lat_error: 2.5                    # lateral error weight in matrix Q in low curvature point
+    mpc_low_curvature_weight_lat_error: 50.5                    # lateral error weight in matrix Q in low curvature point
     mpc_low_curvature_weight_heading_error: 0.0                # heading error weight in matrix Q in low curvature point
     mpc_low_curvature_weight_heading_error_squared_vel: 5.0    # heading error * velocity weight in matrix Q in low curvature point
     mpc_low_curvature_weight_steering_input: 0.7               # steering error weight in matrix R in low curvature point
     mpc_low_curvature_weight_steering_input_squared_vel: 0.25  # steering error * velocity weight in matrix R in low curvature point
     mpc_low_curvature_weight_lat_jerk: 0.0                     # lateral jerk weight in matrix R in low curvature point
-    mpc_low_curvature_weight_steer_rate: 0.05                   # steering rate weight in matrix R in low curvature point
+    mpc_low_curvature_weight_steer_rate: 0.1                   # steering rate weight in matrix R in low curvature point
     mpc_low_curvature_weight_steer_acc: 0.000001               # steering angular acceleration weight in matrix R in low curvature point
     mpc_low_curvature_thresh_curvature: 0.0                    # threshold of curvature to use "low_curvature" parameter (recommend: 0.01~0.03)
-    mpc_weight_terminal_lat_error: 1.5           # terminal lateral error weight in matrix Q to improve mpc stability
-    mpc_weight_terminal_heading_error: 1.5       # terminal heading error weight in matrix Q to improve mpc stability
+    mpc_weight_terminal_lat_error: 75.0         # terminal lateral error weight in matrix Q to improve mpc stability
+    mpc_weight_terminal_heading_error: 10.0       # terminal heading error weight in matrix Q to improve mpc stability
     mpc_zero_ff_steer_deg: 0.5                   # threshold that feed-forward angle becomes zero
     mpc_acceleration_limit: 0.9                  # limit on the vehicle's acceleration
     mpc_velocity_time_constant: 0.3              # time constant used for velocity smoothing
