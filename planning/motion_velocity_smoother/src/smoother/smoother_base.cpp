@@ -14,10 +14,12 @@
 
 #include "motion_velocity_smoother/smoother/smoother_base.hpp"
 
+#include "motion_common/motion_common.hpp"
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/tmp_conversion.hpp"
 #include "motion_velocity_smoother/resample.hpp"
 #include "motion_velocity_smoother/trajectory_utils.hpp"
+#include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -25,6 +27,8 @@
 
 namespace motion_velocity_smoother
 {
+using vehicle_info_util::VehicleInfoUtil;
+
 SmootherBase::SmootherBase(rclcpp::Node & node)
 {
   auto & p = base_param_;
@@ -34,6 +38,10 @@ SmootherBase::SmootherBase(rclcpp::Node & node)
   p.max_jerk = node.declare_parameter("normal.max_jerk", 0.3);
   p.min_jerk = node.declare_parameter("normal.min_jerk", -0.1);
   p.max_lateral_accel = node.declare_parameter("max_lateral_accel", 0.2);
+  p.sample_ds = node.declare_parameter("resample_ds", 0.5);
+  p.curvature_threshold = node.declare_parameter("curvature_threshold", 0.2);
+  p.max_steering_angle_rate = node.declare_parameter("max_steering_angle_rate", 5.0);
+  p.curvature_calculation_distance = node.declare_parameter("curvature_calculation_distance", 1.0);
   p.decel_distance_before_curve = node.declare_parameter("decel_distance_before_curve", 3.5);
   p.decel_distance_after_curve = node.declare_parameter("decel_distance_after_curve", 0.0);
   p.min_curve_velocity = node.declare_parameter("min_curve_velocity", 1.38);
@@ -59,7 +67,39 @@ double SmootherBase::getMinDecel() const { return base_param_.min_decel; }
 double SmootherBase::getMaxJerk() const { return base_param_.max_jerk; }
 
 double SmootherBase::getMinJerk() const { return base_param_.min_jerk; }
+std::vector<double> calcCurvatureFrom3Points(const TrajectoryPoints & trajectory, size_t idx_dist)
+{
+  using tier4_autoware_utils::calcCurvature;
+  using tier4_autoware_utils::getPoint;
 
+  if (trajectory.size() < 3) {
+    const std::vector<double> k_arr(trajectory.size(), 0.0);
+    return k_arr;
+  }
+
+  // if the idx size is not enough, change the idx_dist
+  const auto max_idx_dist = static_cast<size_t>(std::floor((trajectory.size() - 1) / 2.0));
+  idx_dist = std::max(1ul, std::min(idx_dist, max_idx_dist));
+
+  if (idx_dist < 1) {
+    throw std::logic_error("idx_dist less than 1 is not expected");
+  }
+
+  // calculate curvature by circle fitting from three points
+  std::vector<double> k_arr;
+  //  for first point curvature = 0;
+  k_arr.push_back(0.0);
+  for (size_t i = 1; i + 1 < trajectory.size(); i++) {
+    const auto p0 = getPoint(trajectory.at(i - std::min(idx_dist, i)));
+    const auto p1 = getPoint(trajectory.at(i));
+    const auto p2 = getPoint(trajectory.at(i + std::min(idx_dist, trajectory.size() - 1 - i)));
+    k_arr.push_back(calcCurvature(p0, p1, p2));
+  }
+  // for last point curvature = 0;
+  k_arr.push_back(0.0);
+
+  return k_arr;
+}
 boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
   const TrajectoryPoints & input, [[maybe_unused]] const double v0,
   [[maybe_unused]] const double a0, [[maybe_unused]] const bool enable_smooth_limit) const
@@ -114,6 +154,7 @@ boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
     }
     double v_curvature_max = std::sqrt(max_lateral_accel_abs / std::max(curvature, 1.0E-5));
     v_curvature_max = std::max(v_curvature_max, base_param_.min_curve_velocity);
+
     if (enable_smooth_limit) {
       if (i >= latacc_min_vel_arr.size()) return output;
       v_curvature_max = std::max(v_curvature_max, latacc_min_vel_arr.at(i));
@@ -122,6 +163,73 @@ boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
       output.at(i).longitudinal_velocity_mps = v_curvature_max;
     }
   }
+  return output;
+}
+
+boost::optional<TrajectoryPoints> SmootherBase::applySteeringRateLimit(
+  const TrajectoryPoints & input) const
+{
+  if (input.empty()) {
+    return boost::none;
+  }
+
+  if (input.size() < 3) {
+    return boost::optional<TrajectoryPoints>(
+      input);  // cannot calculate the desired velocity. do nothing.
+  }
+  // Interpolate with constant interval distance for lateral acceleration calculation.
+  std::vector<double> out_arclength;
+  const auto traj_length = motion_utils::calcArcLength(input);
+  for (double s = 0; s < traj_length; s += base_param_.sample_ds) {
+    out_arclength.push_back(s);
+  }
+  const auto output_traj =
+    motion_utils::resampleTrajectory(motion_utils::convertToTrajectory(input), out_arclength);
+  auto output = motion_utils::convertToTrajectoryPointArray(output_traj);
+  output.back() = input.back();  // keep the final speed.
+
+  const size_t idx_dist = static_cast<size_t>(std::max(
+    static_cast<int>((base_param_.curvature_calculation_distance) / base_param_.sample_ds), 1));
+
+  // Calculate curvature assuming the trajectory points interval is constant
+  const auto curvature_v = calcCurvatureFrom3Points(output, idx_dist);
+
+  for (size_t i = 0; i + 1 < output.size(); i++) {
+    if (fabs(curvature_v.at(i)) > base_param_.curvature_threshold) {
+      // calculate the just 2 steering angle
+      output.at(i).front_wheel_angle_rad = std::atan(base_param_.wheel_base * curvature_v.at(i));
+      output.at(i + 1).front_wheel_angle_rad =
+        std::atan(base_param_.wheel_base * curvature_v.at(i + 1));
+
+      const double mean_vel =
+        (output.at(i).longitudinal_velocity_mps + output.at(i + 1).longitudinal_velocity_mps) / 2.0;
+      const double dt =
+        std::max(base_param_.sample_ds / mean_vel, std::numeric_limits<double>::epsilon());
+      const double steering_diff =
+        fabs(output.at(i).front_wheel_angle_rad - output.at(i + 1).front_wheel_angle_rad);
+      const double dt_steering =
+        steering_diff / tier4_autoware_utils::deg2rad(base_param_.max_steering_angle_rate);
+
+      if (dt_steering > dt) {
+        const double target_mean_vel = (base_param_.sample_ds / dt_steering);
+        for (size_t k = 0; k < 2; k++) {
+          double temp_vel =
+            output.at(i + k).longitudinal_velocity_mps * (target_mean_vel / mean_vel);
+          if (temp_vel < output.at(i + k).longitudinal_velocity_mps) {
+            output.at(i + k).longitudinal_velocity_mps = temp_vel;
+          } else {
+            if (target_mean_vel < output.at(i + k).longitudinal_velocity_mps) {
+              output.at(i + k).longitudinal_velocity_mps = target_mean_vel;
+            }
+          }
+          if (output.at(i + k).longitudinal_velocity_mps < base_param_.min_curve_velocity) {
+            output.at(i + k).longitudinal_velocity_mps = base_param_.min_curve_velocity;
+          }
+        }
+      }
+    }
+  }
+
   return output;
 }
 
