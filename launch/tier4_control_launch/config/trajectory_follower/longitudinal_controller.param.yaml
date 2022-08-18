@@ -6,8 +6,8 @@
     enable_smooth_stop: true
     enable_overshoot_emergency: true
     enable_large_tracking_error_emergency: true
-    enable_slope_compensation: false
-    enable_keep_stopped_until_steer_convergence: false
+    enable_slope_compensation: true
+    enable_keep_stopped_until_steer_convergence: true
 
     # state transition
     drive_state_stop_dist: 0.5
@@ -21,15 +21,15 @@
     emergency_state_traj_rot_dev: 0.7
 
     # drive state
-    kp: 1.0
-    ki: 0.13
+    kp: 0.5
+    ki: 0.15
     kd: 0.0
     max_out: 0.9
     min_out: -0.9
     max_p_effort: 0.9
     min_p_effort: -0.9
     max_i_effort: 0.3
-    min_i_effort: -0.3
+    min_i_effort: -0.6
     max_d_effort: 0.0
     min_d_effort: 0.0
     lpf_vel_error_gain: 0.9
@@ -38,7 +38,7 @@
     brake_keeping_acc: -0.2
 
     # smooth stop state
-    smooth_stop_max_strong_acc: -0.5
+    smooth_stop_max_strong_acc: -0.6
     smooth_stop_min_strong_acc: -1.0
     smooth_stop_weak_acc: -0.3
     smooth_stop_weak_stop_acc: -0.8
