@@ -22,7 +22,7 @@
 
     # drive state
     kp: 1.0
-    ki: 0.1
+    ki: 0.13
     kd: 0.0
     max_out: 0.9
     min_out: -0.9
