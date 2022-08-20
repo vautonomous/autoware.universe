@@ -62,7 +62,7 @@
     new_traj_duration_time: 1.0
     new_traj_end_dist: 0.3
     lookahead_distance_ratio: 4.1
-    min_lookahead_distance: 4.2
+    min_lookahead_distance: 4.0
     reverse_min_lookahead_distance: 7.0
 
     # vehicle parameters
