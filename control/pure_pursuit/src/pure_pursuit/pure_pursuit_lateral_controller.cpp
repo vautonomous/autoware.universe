@@ -45,7 +45,7 @@ namespace
 double calcLookaheadDistance(
   const double velocity, const double lookahead_distance_ratio, const double min_lookahead_distance)
 {
-  const double lookahead_distance = lookahead_distance_ratio * std::sqrt(std::abs(velocity));
+  const double lookahead_distance = lookahead_distance_ratio * std::abs(velocity);
   return std::max(lookahead_distance, min_lookahead_distance);
 }
 
