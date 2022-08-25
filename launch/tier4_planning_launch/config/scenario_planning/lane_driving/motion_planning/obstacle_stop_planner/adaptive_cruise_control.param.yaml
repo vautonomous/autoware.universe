@@ -15,7 +15,7 @@
       max_standard_acceleration: 0.5 # supposed maximum acceleration in active cruise control [m/ss]
       min_standard_acceleration: -1.0 # supposed minimum acceleration (deceleration) in active cruise control
       standard_idling_time: 0.5 # supposed idling time to react object in active cruise control [s]
-      min_dist_standard: 4.0 # minimum distance in active cruise control [m]
+      min_dist_standard: 7.0 # minimum distance in active cruise control [m]
       obstacle_min_standard_acceleration: -1.5 # supposed minimum acceleration of forward obstacle [m/ss]
       margin_rate_to_change_vel: 0.3 # margin to insert upper velocity [-]
 
