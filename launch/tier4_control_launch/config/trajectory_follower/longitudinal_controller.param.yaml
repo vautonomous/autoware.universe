@@ -1,8 +1,9 @@
 /**:
   ros__parameters:
-    delay_compensation_time: 0.17
+    longitudinal_ctrl_period: 0.03  # control period [s]
+    delay_compensation_time: 0.90  # delay compensation time [s]
 
-    enable_smooth_stop: true
+    enable_smooth_stop: false
     enable_overshoot_emergency: true
     enable_large_tracking_error_emergency: true
     enable_slope_compensation: false
@@ -10,8 +11,8 @@
 
     # state transition
     drive_state_stop_dist: 0.5
-    drive_state_offset_stop_dist: 1.0
-    stopping_state_stop_dist: 0.49
+    drive_state_offset_stop_dist: 5.0
+    stopping_state_stop_dist: 5.5
     stopped_state_entry_duration_time: 0.1
     stopped_state_entry_vel: 0.1
     stopped_state_entry_acc: 0.1
@@ -20,33 +21,33 @@
     emergency_state_traj_rot_dev: 0.7
 
     # drive state
-    kp: 1.0
-    ki: 0.1
+    kp: 0.7
+    ki: 0.25
     kd: 0.0
-    max_out: 1.0
-    min_out: -1.0
-    max_p_effort: 1.0
-    min_p_effort: -1.0
+    max_out: 0.9
+    min_out: -0.9
+    max_p_effort: 0.9
+    min_p_effort: -0.9
     max_i_effort: 0.3
-    min_i_effort: -0.3
+    min_i_effort: -0.9
     max_d_effort: 0.0
     min_d_effort: 0.0
     lpf_vel_error_gain: 0.9
     current_vel_threshold_pid_integration: 0.5
-    enable_brake_keeping_before_stop: false
+    enable_brake_keeping_before_stop: true
     brake_keeping_acc: -0.2
 
     # smooth stop state
-    smooth_stop_max_strong_acc: -0.5
-    smooth_stop_min_strong_acc: -1.0
-    smooth_stop_weak_acc: -0.3
-    smooth_stop_weak_stop_acc: -0.8
+    smooth_stop_max_strong_acc: -0.6
+    smooth_stop_min_strong_acc: -0.9
+    smooth_stop_weak_acc: -0.6
+    smooth_stop_weak_stop_acc: -0.9
     smooth_stop_strong_stop_acc: -3.4
-    smooth_stop_max_fast_vel: 0.5
+    smooth_stop_max_fast_vel: 1.0
     smooth_stop_min_running_vel: 0.01
     smooth_stop_min_running_acc: 0.01
     smooth_stop_weak_stop_time: 0.8
-    smooth_stop_weak_stop_dist: -0.3
+    smooth_stop_weak_stop_dist: -2.0
     smooth_stop_strong_stop_dist: -0.5
 
     # stopped state
@@ -60,12 +61,12 @@
     emergency_jerk: -3.0
 
     # acceleration limit
-    max_acc: 3.0
-    min_acc: -5.0
+    max_acc: 0.9
+    min_acc: -1.5
 
     # jerk limit
-    max_jerk: 2.0
-    min_jerk: -5.0
+    max_jerk: 0.6
+    min_jerk: -0.6
 
     # pitch
     use_trajectory_for_pitch_calculation: false

@@ -12,7 +12,7 @@
   <!-- ndt twist publisher -->
   <include file="$(find-pkg-share pose2twist)/launch/pose2twist.launch.xml">
     <arg name="input_pose_topic" value="/localization/pose_estimator/pose"/>
-    <arg name="output_twist_topic" value="/estimate_twist"/>
+    <arg name="output_twist_topic" value="/localization/pose_twist_fusion_filter/twist"/>
   </include>
 
   <!-- steer offset estimator -->

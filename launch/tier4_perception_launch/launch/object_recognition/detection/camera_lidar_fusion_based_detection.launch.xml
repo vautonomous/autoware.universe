@@ -28,18 +28,27 @@
   <arg name="container_name" default="pointcloud_container"/>
   <arg name="use_validator" default="true" description="use obstacle_pointcloud based validator"/>
 
-  <!-- Jetson AGX -->
-  <!-- <include file="$(find-pkg-share tensorrt_yolo)/launch/yolo.launch.xml">
-    <arg name="image_raw0" value="$(var image_raw0)"/>
-    <arg name="image_raw1" value="$(var image_raw1)"/>
-    <arg name="image_raw2" value="$(var image_raw2)"/>
-    <arg name="image_raw3" value="$(var image_raw3)"/>
-    <arg name="image_raw4" value="$(var image_raw4)"/>
-    <arg name="image_raw5" value="$(var image_raw5)"/>
-    <arg name="image_raw6" value="$(var image_raw6)"/>
-    <arg name="image_raw7" value="$(var image_raw7)"/>
-    <arg name="image_number" value="$(var image_number)"/>
-  </include> -->
+
+<!--  &lt;!&ndash; ISUZU Decompress Cameras &ndash;&gt;-->
+<!--  <include file="$(find-pkg-share image_transport_decompressor)/launch/isuzu_image_decompressor.launch.xml"/>-->
+
+  <!-- ISUZU -->
+<!--  <include file="$(find-pkg-share tensorrt_yolo)/launch/isuzu_yolo.launch.xml">-->
+<!--    <arg name="image_raw0" value="$(var image_raw0)"/>-->
+<!--    <arg name="image_raw1" value="$(var image_raw1)"/>-->
+<!--    <arg name="image_raw2" value="$(var image_raw2)"/>-->
+<!--    <arg name="image_raw3" value="$(var image_raw3)"/>-->
+<!--    <arg name="image_raw4" value="$(var image_raw4)"/>-->
+<!--    <arg name="image_raw5" value="$(var image_raw5)"/>-->
+<!--    <arg name="image_raw6" value="$(var image_raw6)"/>-->
+<!--    <arg name="image_raw7" value="$(var image_raw7)"/>-->
+<!--    <arg name="image_number" value="$(var image_number)"/>-->
+<!--  </include>-->
+
+
+  <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/front_camera_node_container.launch.py"/>
+  <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/left_camera_node_container.launch.py"/>
+  <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/right_camera_node_container.launch.py"/>
 
   <!-- Pointcloud map filter -->
   <group>
@@ -154,6 +163,8 @@
     <include file="$(find-pkg-share lidar_centerpoint)/launch/lidar_centerpoint.launch.xml">
       <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
       <arg name="output/objects" value="objects"/>
+      <arg name="score_threshold" value="0.75"/>
+      <arg name="densification_num_past_frames" value="1"/>
     </include>
   </group>
 

@@ -1,0 +1,28 @@
+<launch>
+  <arg name="input_topic_front" default="/lucid_vision/camera_0/compressed"/>
+  <arg name="output_topic_front" default="/lucid_vision/camera_0/raw_image"/>
+
+  <arg name="input_topic_left" default="/lucid_vision/camera_1/compressed"/>
+  <arg name="output_topic_left" default="/lucid_vision/camera_1/raw_image"/>
+
+  <arg name="input_topic_right" default="/lucid_vision/camera_2/compressed"/>
+  <arg name="output_topic_right" default="/lucid_vision/camera_2/raw_image"/>
+
+  <node pkg="image_transport_decompressor" exec="image_transport_decompressor_node" name="$(anon image_transport_decompressor_node)">
+    <remap from="~/input/compressed_image" to="$(var input_topic_front)"/>
+    <remap from="~/output/raw_image" to="$(var output_topic_front)"/>
+  </node>
+
+  <node pkg="image_transport_decompressor" exec="image_transport_decompressor_node" name="$(anon image_transport_decompressor_node)">
+    <remap from="~/input/compressed_image" to="$(var input_topic_left)"/>
+    <remap from="~/output/raw_image" to="$(var output_topic_left)"/>
+  </node>
+
+  <node pkg="image_transport_decompressor" exec="image_transport_decompressor_node" name="$(anon image_transport_decompressor_node)">
+    <remap from="~/input/compressed_image" to="$(var input_topic_right)"/>
+    <remap from="~/output/raw_image" to="$(var output_topic_right)"/>
+  </node>
+
+
+
+</launch>

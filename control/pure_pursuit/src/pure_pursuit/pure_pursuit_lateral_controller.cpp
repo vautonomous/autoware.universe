@@ -66,7 +66,7 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
   // Algorithm Parameters
   param_.lookahead_distance_ratio =
     node_->declare_parameter<double>("lookahead_distance_ratio", 2.2);
-  param_.min_lookahead_distance = node_->declare_parameter<double>("min_lookahead_distance", 2.5);
+  param_.min_lookahead_distance = node_->declare_parameter<double>("min_lookahead_distance", 4.0);
   param_.reverse_min_lookahead_distance =
     node_->declare_parameter<double>("reverse_min_lookahead_distance", 7.0);
   param_.converged_steer_rad_ = node_->declare_parameter<double>("converged_steer_rad", 0.1);
