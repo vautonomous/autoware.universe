@@ -21,3 +21,4 @@
         split_points_distance_tolerance: 0.2
         split_height_distance: 0.3
         use_virtual_ground_point: True
+        radial_divider_angle_deg: 0.85
