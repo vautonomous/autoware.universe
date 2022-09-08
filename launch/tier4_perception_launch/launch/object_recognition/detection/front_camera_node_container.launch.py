@@ -161,7 +161,7 @@ def generate_launch_description():
                               "fps": camera_yaml_param['fps'],
                               "horizontal_binning": camera_yaml_param['horizontal_binning'],
                               "vertical_binning": camera_yaml_param['vertical_binning'],
-                              "flip_enable": camera_yaml_param['flip_enable'],
+                              "resize_image": camera_yaml_param['resize_image'],
                               "camera_info_url": camera_yaml_param['camera_info_url'],
                              }],
                 remappings=[
