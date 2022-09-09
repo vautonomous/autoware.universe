@@ -226,26 +226,49 @@ class GroundSegmentationPipeline:
             )
         )
 
-        components.append(
-            ComposableNode(
-                package="ground_segmentation",
-                plugin=self.ground_segmentation_param["common_ground_filter"]["plugin"],
-                name="common_ground_filter",
-                remappings=[
-                    ("input", "range_cropped/pointcloud"),
-                    ("output", output_topic),
-                ],
-                parameters=[
-                    self.ground_segmentation_param["common_ground_filter"]["parameters"],
-                    self.vehicle_info,
-                    {"input_frame": "base_link"},
-                    {"output_frame": "base_link"},
-                ],
-                extra_arguments=[
-                    {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
-                ],
-            )
-        )
+        # components.append(
+        #     ComposableNode(
+        #         package="ground_segmentation",
+        #         plugin=self.ground_segmentation_param["common_ground_filter"]["plugin"],
+        #         name="common_ground_filter",
+        #         remappings=[
+        #             ("input", "range_cropped/pointcloud"),
+        #             ("output", output_topic),
+        #         ],
+        #         parameters=[
+        #             self.ground_segmentation_param["common_ground_filter"]["parameters"],
+        #             self.vehicle_info,
+        #             {"input_frame": "base_link"},
+        #             {"output_frame": "base_link"},
+        #         ],
+        #         extra_arguments=[
+        #             {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
+        #         ],
+        #     )
+        # )
+
+        components.append(ComposableNode(
+            package="ground_segmentation",
+            plugin="ground_segmentation::RayGroundFilterComponent",
+            name="scan_ground_filter",
+            remappings=[
+                ("input", "range_cropped/pointcloud"),
+                ("output", output_topic),
+            ],
+            parameters=[
+                {
+                    "base_frame": "base_link",
+                    "general_max_slope": 30.0,
+                    "local_max_slope": 10.0,
+                    "initial_max_slope": 10.0,
+                    "min_x": -1.60,
+                    "max_x": 6.709,
+                    "min_y": -2.5595,
+                    "max_y": 2.3995,
+                }
+            ],
+        ),)
+
         return components
 
     def create_single_frame_obstacle_segmentation_components(self, input_topic, output_topic):
