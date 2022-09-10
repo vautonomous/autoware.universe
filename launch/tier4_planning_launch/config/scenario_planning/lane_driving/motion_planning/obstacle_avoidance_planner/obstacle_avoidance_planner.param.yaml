@@ -104,10 +104,10 @@
 
         clearance:  # clearance(distance) between vehicle and roads/objects when generating trajectory
           hard_clearance_from_road: 0.0 # clearance from road boundary[m]
-          soft_clearance_from_road: 0.1 # clearance from road boundary[m]
+          soft_clearance_from_road: 0.2 # clearance from road boundary[m]
           soft_second_clearance_from_road: 1.0 # clearance from road boundary[m]
           clearance_from_object: 1.0 # clearance from object[m]
-          extra_desired_clearance_from_road: 0.0 # extra desired clearance from road
+          extra_desired_clearance_from_road: 0.1 # extra desired clearance from road
 
         weight:
           soft_avoidance_weight: 1000.0 # slack weight for lateral error around the middle point

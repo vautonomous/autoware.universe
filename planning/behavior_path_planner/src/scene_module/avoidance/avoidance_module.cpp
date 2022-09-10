@@ -2682,7 +2682,7 @@ bool AvoidanceModule::expandDrivableArea(
     const double r_offset = r_type.compare("road_border") != 0 ? -right_bound_offset : 0.0;
     const double l_offset = l_type.compare("road_border") != 0 ? left_bound_offset : 0.0;
 
-    expand_lanes.push_back(lanelet::utils::getExpandedLanelet(current_lane, l_offset, r_offset));
+    expand_lanes.push_back(lanelet::utils::getExpandedLanelet(lane, l_offset, r_offset));
   }
 
   current_lanes = expand_lanes;
