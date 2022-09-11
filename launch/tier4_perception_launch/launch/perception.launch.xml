@@ -125,10 +125,10 @@
       </node>
     </group>
 
-<!--    &lt;!&ndash; traffic light module &ndash;&gt;-->
-<!--    <group>-->
-<!--      <push-ros-namespace namespace="traffic_light_recognition"/>-->
-<!--      <include file="$(find-pkg-share tier4_perception_launch)/launch/traffic_light_recognition/traffic_light.launch.xml"/>-->
-<!--    </group>-->
+    <!-- traffic light module -->
+    <group>
+      <push-ros-namespace namespace="object_recognition/detection"/>
+      <include file="$(find-pkg-share tier4_perception_launch)/launch/traffic_light_recognition/traffic_light.launch.xml"/>
+    </group>
   </group>
 </launch>
