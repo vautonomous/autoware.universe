@@ -292,6 +292,10 @@ private:
   double getCurrentBaseShift() const { return path_shifter_.getBaseOffset(); }
   double getCurrentShift() const;
   double getCurrentLinearShift() const;
+
+  bool expandDrivableArea(
+    PathWithLaneId & path_with_lane_id, const double & right_bound_offset,
+    const double & left_bound_offset);
 };
 
 }  // namespace behavior_path_planner

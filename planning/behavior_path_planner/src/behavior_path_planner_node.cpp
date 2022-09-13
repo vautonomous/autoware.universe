@@ -297,6 +297,10 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 
   p.avoidance_execution_lateral_threshold = dp("avoidance_execution_lateral_threshold", 0.499);
 
+  p.static_expand_drivable_area = dp("static_expand_drivable_area", false);
+  p.static_right_expand_bound_offset = dp("static_right_bound_offset", 0.5);
+  p.static_left_expand_bound_offset = dp("static_left_bound_offset", 0.5);
+
   return p;
 }
 
