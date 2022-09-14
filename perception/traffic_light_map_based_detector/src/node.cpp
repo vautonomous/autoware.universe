@@ -64,7 +64,8 @@ cv::Point2d calcRawImagePointFromPoint3D(
   const image_geometry::PinholeCameraModel & pinhole_camera_model, const cv::Point3d & point3d)
 {
   cv::Point2d rectified_image_point = pinhole_camera_model.project3dToPixel(point3d);
-  return pinhole_camera_model.unrectifyPoint(rectified_image_point);
+//  return pinhole_camera_model.unrectifyPoint(rectified_image_point);
+  return rectified_image_point;
 }
 
 cv::Point2d calcRawImagePointFromPoint3D(

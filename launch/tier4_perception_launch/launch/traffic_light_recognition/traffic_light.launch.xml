@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="enable_fine_detection" default="true" description="enable fine position adjustment of traffic light"/>
-  <arg name="input/image" default="/lucid_vision/camera_0/raw_image" description="image raw topic name for traffic light"/>
-  <arg name="input/camera_info" default="/lucid_vision/camera_0/camera_info" description="camera info topic name for traffic light"/>
+  <arg name="input/image" default="/lucid_vision/camera_1/raw_image" description="image raw topic name for traffic light"/>
+  <arg name="input/camera_info" default="/lucid_vision/camera_1/camera_info" description="camera info topic name for traffic light"/>
 
   <group if="$(var enable_fine_detection)">
     <include file="$(find-pkg-share traffic_light_map_based_detector)/launch/traffic_light_map_based_detector.launch.xml">
@@ -18,15 +18,15 @@
     </include>
   </group>
 
-  <!-- classification -->
-  <group>
-    <include file="$(find-pkg-share tier4_perception_launch)/launch/traffic_light_recognition/traffic_light_node_container.launch.py">
-      <arg name="input/image" value="$(var input/image)"/>
-      <arg name="enable_fine_detection" value="$(var enable_fine_detection)"/>
-      <arg name="use_intra_process" value="true"/>
-      <arg name="use_multithread" value="true"/>
-    </include>
-  </group>
+<!--  &lt;!&ndash; classification &ndash;&gt;-->
+<!--  <group>-->
+<!--    <include file="$(find-pkg-share tier4_perception_launch)/launch/traffic_light_recognition/traffic_light_node_container.launch.py">-->
+<!--      <arg name="input/image" value="$(var input/image)"/>-->
+<!--      <arg name="enable_fine_detection" value="$(var enable_fine_detection)"/>-->
+<!--      <arg name="use_intra_process" value="true"/>-->
+<!--      <arg name="use_multithread" value="true"/>-->
+<!--    </include>-->
+<!--  </group>-->
   <!-- visualizer -->
   <group>
     <include file="$(find-pkg-share traffic_light_visualization)/launch/traffic_light_map_visualizer.launch.xml"/>
