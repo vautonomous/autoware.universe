@@ -96,7 +96,7 @@ def generate_launch_description():
         "label_file", os.path.join(ssd_fine_detector_share_dir, "data", "voc_labels_tl.txt")
     )
     add_launch_arg("fine_detector_precision", "FP32")
-    add_launch_arg("score_thresh", "0.6")
+    add_launch_arg("score_thresh", "0.4")
     add_launch_arg("max_batch_size", "8")
     add_launch_arg("approximate_sync", "False")
     add_launch_arg("mean", "[0.5, 0.5, 0.5]")
@@ -226,7 +226,7 @@ def generate_launch_description():
                     )
                 ],
                 remappings=[
-                    ("~/input/image", input_image),
+                    ("~/input/image", "image_rect_front"),
                     ("~/input/rois", "rough/rois"),
                     # ("~/input/rois", "rois"),
                     ("~/output/traffic_signals", "traffic_signals"),
