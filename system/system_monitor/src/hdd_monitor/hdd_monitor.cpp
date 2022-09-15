@@ -49,9 +49,9 @@ HDDMonitor::HDDMonitor(const rclcpp::NodeOptions & options)
   getHDDParams();
 
   updater_.setHardwareID(hostname_);
-  updater_.add("HDD Temperature", this, &HDDMonitor::checkSMARTTemperature);
-  updater_.add("HDD PowerOnHours", this, &HDDMonitor::checkSMARTPowerOnHours);
-  updater_.add("HDD TotalDataWritten", this, &HDDMonitor::checkSMARTTotalDataWritten);
+//  updater_.add("HDD Temperature", this, &HDDMonitor::checkSMARTTemperature);
+//  updater_.add("HDD PowerOnHours", this, &HDDMonitor::checkSMARTPowerOnHours);
+//  updater_.add("HDD TotalDataWritten", this, &HDDMonitor::checkSMARTTotalDataWritten);
   updater_.add("HDD Usage", this, &HDDMonitor::checkUsage);
 
   // get HDD information from HDD reader for the first time
