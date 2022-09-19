@@ -42,10 +42,25 @@
 
 namespace
 {
-double calcLookaheadDistance(
-  const double velocity, const double lookahead_distance_ratio, const double min_lookahead_distance)
+
+double calcLateralError(
+  const geometry_msgs::msg::Pose & ego_pose,
+  const autoware_auto_planning_msgs::msg::TrajectoryPoint & ref_pose)
 {
-  const double lookahead_distance = lookahead_distance_ratio * std::abs(velocity);
+  const double err_x = ego_pose.position.x - ref_pose.pose.position.x;
+  const double err_y = ego_pose.position.y - ref_pose.pose.position.y;
+  const double ref_yaw = tf2::getYaw(ref_pose.pose.orientation);
+  const double lat_err = -std::sin(ref_yaw) * err_x + std::cos(ref_yaw) * err_y;
+  return lat_err;
+}
+
+double calcLookaheadDistance(
+  const double velocity, const double lookahead_distance_ratio, const double min_lookahead_distance,
+  const double lateral_error, const double lateral_error_ratio)
+{
+  const double lookahead_distance = min_lookahead_distance +
+                                    lateral_error_ratio * std::abs(lateral_error) +
+                                    lookahead_distance_ratio * std::abs(velocity);
   return std::max(lookahead_distance, min_lookahead_distance);
 }
 
@@ -70,6 +85,7 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
   param_.reverse_min_lookahead_distance =
     node_->declare_parameter<double>("reverse_min_lookahead_distance", 7.0);
   param_.converged_steer_rad_ = node_->declare_parameter<double>("converged_steer_rad", 0.1);
+  param_.lateral_error_ratio = node_->declare_parameter<double>("lateral_error_ratio", 2.5);
 
   // Debug Publishers
   pub_debug_marker_ =
@@ -176,14 +192,18 @@ boost::optional<double> PurePursuitLateralController::calcTargetCurvature()
   }
 
   const double target_vel = target_point->longitudinal_velocity_mps;
+  const auto closest_idx_result = planning_utils::findClosestIdxWithDistAngThr(
+    planning_utils::extractPoses(*trajectory_), current_pose_->pose, 3.0, M_PI_4);
 
+  const double lateral_error =
+    calcLateralError(current_pose_->pose, trajectory_->points.at(closest_idx_result.second));
   // Calculate lookahead distance
   const bool is_reverse = (target_vel < 0);
   const double min_lookahead_distance =
     is_reverse ? param_.reverse_min_lookahead_distance : param_.min_lookahead_distance;
   const double lookahead_distance = calcLookaheadDistance(
     current_odometry_->twist.twist.linear.x, param_.lookahead_distance_ratio,
-    min_lookahead_distance);
+    min_lookahead_distance, lateral_error, param_.lateral_error_ratio);
 
   // Set PurePursuit data
   pure_pursuit_->setCurrentPose(current_pose_->pose);

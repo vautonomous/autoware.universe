@@ -67,6 +67,7 @@ struct Param
   double min_lookahead_distance;
   double reverse_min_lookahead_distance;  // min_lookahead_distance in reverse gear
   double converged_steer_rad_;
+  double lateral_error_ratio;
 };
 
 struct DebugData
