@@ -34,6 +34,9 @@
 #include "pure_pursuit/util/planning_utils.hpp"
 #include "pure_pursuit/util/tf_utils.hpp"
 
+#include <motion_utils/resample/resample.hpp>
+#include <motion_utils/trajectory/tmp_conversion.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <algorithm>
@@ -42,6 +45,26 @@
 
 namespace
 {
+// alias to use template instance with default allocator
+using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+
+geometry_msgs::msg::Quaternion createOrientationMsgFromYaw(double yaw_angle)
+{
+  geometry_msgs::msg::Quaternion orientation_msg;
+  double roll_angle = 0.0;
+  double pitch_angle = 0.0;
+
+  tf2::Quaternion quaternion;
+  quaternion.setRPY(roll_angle, pitch_angle, yaw_angle);
+
+  orientation_msg.w = quaternion.getW();
+  orientation_msg.x = quaternion.getX();
+  orientation_msg.y = quaternion.getY();
+  orientation_msg.z = quaternion.getZ();
+
+  return orientation_msg;
+}
 
 double calcLateralError(
   const geometry_msgs::msg::Pose & ego_pose,
@@ -56,12 +79,30 @@ double calcLateralError(
 
 double calcLookaheadDistance(
   const double velocity, const double lookahead_distance_ratio, const double min_lookahead_distance,
-  const double lateral_error, const double lateral_error_ratio)
+  const double lateral_error, const double lateral_error_ratio, const double curvature,
+  const double curvature_ratio)
 {
-  const double lookahead_distance = min_lookahead_distance +
-                                    lateral_error_ratio * std::abs(lateral_error) +
-                                    lookahead_distance_ratio * std::abs(velocity);
+  const double lookahead_distance =
+    min_lookahead_distance + lateral_error_ratio * std::abs(lateral_error) +
+    lookahead_distance_ratio * std::abs(velocity) - curvature_ratio * std::abs(curvature);
   return std::max(lookahead_distance, min_lookahead_distance);
+}
+
+double calcCurvature(
+  const TrajectoryPoint & p1, const TrajectoryPoint & p2, const TrajectoryPoint & p3)
+{
+  // Calculation details are described in the following page
+  // https://en.wikipedia.org/wiki/Menger_curvature
+  const double denominator = tier4_autoware_utils::calcDistance2d(p1, p2) *
+                             tier4_autoware_utils::calcDistance2d(p2, p3) *
+                             tier4_autoware_utils::calcDistance2d(p3, p1);
+  if (std::fabs(denominator) < 1e-10) {
+    throw std::runtime_error("points are too close for curvature calculation.");
+  }
+  return 2.0 *
+         ((p2.pose.position.x - p1.pose.position.x) * (p3.pose.position.y - p1.pose.position.y) -
+          (p2.pose.position.y - p1.pose.position.y) * (p3.pose.position.x - p1.pose.position.x)) /
+         denominator;
 }
 
 }  // namespace
@@ -86,6 +127,10 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
     node_->declare_parameter<double>("reverse_min_lookahead_distance", 7.0);
   param_.converged_steer_rad_ = node_->declare_parameter<double>("converged_steer_rad", 0.1);
   param_.lateral_error_ratio = node_->declare_parameter<double>("lateral_error_ratio", 2.5);
+  param_.sampling_ds = node_->declare_parameter<double>("sampling_ds", 0.1);
+  param_.curvature_ratio = node_->declare_parameter<double>("curvature_ratio", 2.5);
+  param_.prediction_time_period = node_->declare_parameter<double>("prediction_time_period", 4.0);
+  param_.prediction_time_length = node_->declare_parameter<double>("prediction_time_length", 0.2);
 
   // Debug Publishers
   pub_debug_marker_ =
@@ -125,23 +170,72 @@ void PurePursuitLateralController::setInputData(InputData const & input_data)
   current_steering_ = input_data.current_steering_ptr;
 }
 
+TrajectoryPoint PurePursuitLateralController::calcNextPose(const double dt, TrajectoryPoint & point, AckermannLateralCommand cmd)
+{
+  TrajectoryPoint output_p;
+  double current_yaw = tf2::getYaw(point.pose.orientation);
+  output_p.pose.position.x =
+    point.pose.position.x + point.longitudinal_velocity_mps * cos(current_yaw) * dt;
+  output_p.pose.position.y =
+    point.pose.position.y + point.longitudinal_velocity_mps * sin(current_yaw) * dt;
+  output_p.pose.position.z = point.pose.position.z;
+  output_p.pose.orientation =
+    point.pose.orientation +
+    createOrientationMsgFromYaw(((point.longitudinal_velocity_mps * tan(cmd.steering_tire_angle)) / param_.wheel_base) * dt);
+  return output_p;
+}
+
 boost::optional<LateralOutput> PurePursuitLateralController::run()
 {
   current_pose_ = self_pose_listener_.getCurrentPose();
   if (!isDataReady()) {
     return boost::none;
   }
+  const auto num_of_iteration = std::max(
+    static_cast<int>(std::ceil(param_.prediction_time_length / param_.prediction_time_period)), 1);
+  Trajectory predicted_trajectory;
+  predicted_trajectory.set__header(trajectory_->header);
 
-  const auto target_curvature = calcTargetCurvature();
   AckermannLateralCommand cmd_msg;
-  if (target_curvature) {
-    cmd_msg = generateCtrlCmdMsg(*target_curvature);
-    publishDebugMarker();
-  } else {
-    RCLCPP_WARN_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 5000, "failed to solve pure_pursuit");
-    cmd_msg = generateCtrlCmdMsg({0.0});
+
+  for (int i = 0; i < num_of_iteration; i++) {
+    if (i == 0) {
+      TrajectoryPoint p;
+      p.pose = current_pose_->pose;
+      p.longitudinal_velocity_mps = current_odometry_->twist.twist.linear.x;
+      predicted_trajectory.points.push_back(p);
+
+      const auto pp_output = calcTargetCurvature(true, predicted_trajectory.points.at(i).pose);
+      if (pp_output) {
+        cmd_msg = generateCtrlCmdMsg(pp_output->curvature);
+        publishDebugMarker();
+      } else {
+        RCLCPP_WARN_THROTTLE(
+          node_->get_logger(), *node_->get_clock(), 5000, "failed to solve pure_pursuit for control command calculation");
+        cmd_msg = generateCtrlCmdMsg({0.0});
+      }
+
+      predicted_trajectory.points.push_back(calcNextPose(param_.prediction_time_period, predicted_trajectory.points.at(i), cmd_msg));
+    } else {
+      const auto pp_output = calcTargetCurvature(false, predicted_trajectory.points.at(i).pose);
+      AckermannLateralCommand tmp_msg;
+
+      if (pp_output) {
+        tmp_msg = generateCtrlCmdMsg(pp_output->curvature);
+        predicted_trajectory.points.at(i).longitudinal_velocity_mps = pp_output->velocity;
+      } else {
+        RCLCPP_WARN_THROTTLE(
+          node_->get_logger(), *node_->get_clock(), 5000, "failed to solve pure_pursuit for prediction");
+        tmp_msg = generateCtrlCmdMsg({0.0});
+      }
+
+      predicted_trajectory.points.push_back(calcNextPose(param_.prediction_time_period, predicted_trajectory.points.at(i), tmp_msg));
+    }
   }
+
+  // for last point
+
+  predicted_trajectory.points.back().longitudinal_velocity_mps = 0.0;
 
   LateralOutput output;
   output.control_cmd = cmd_msg;
@@ -176,7 +270,8 @@ void PurePursuitLateralController::publishDebugMarker() const
   pub_debug_marker_->publish(marker_array);
 }
 
-boost::optional<double> PurePursuitLateralController::calcTargetCurvature()
+boost::optional<pp_out> PurePursuitLateralController::calcTargetCurvature(
+  bool is_control_output, geometry_msgs::msg::Pose pose)
 {
   // Ignore invalid trajectory
   if (trajectory_->points.size() < 3) {
@@ -185,29 +280,78 @@ boost::optional<double> PurePursuitLateralController::calcTargetCurvature()
     return {};
   }
 
+  // Interpolate with constant interval distance.
+  std::vector<double> out_arclength;
+  auto trajectory = motion_utils::convertToTrajectoryPointArray(*trajectory_);
+  const auto traj_length = motion_utils::calcArcLength(trajectory);
+  for (double s = 0; s < traj_length; s += param_.sampling_ds) {
+    out_arclength.push_back(s);
+  }
+  auto output_traj =
+    motion_utils::resampleTrajectory(motion_utils::convertToTrajectory(trajectory), out_arclength);
+
   // Calculate target point for velocity/acceleration
-  const auto target_point = calcTargetPoint();
-  if (!target_point) {
+  const auto closest_idx_result = planning_utils::findClosestIdxWithDistAngThr(
+    planning_utils::extractPoses(output_traj), pose, 3.0, M_PI_4);
+
+  if (!closest_idx_result.first) {
+    RCLCPP_ERROR(node_->get_logger(), "cannot find closest waypoint");
     return {};
   }
+  pp_out output_cmd;
+  const TrajectoryPoint & target_point = output_traj.points.at(closest_idx_result.second);
 
-  const double target_vel = target_point->longitudinal_velocity_mps;
-  const auto closest_idx_result = planning_utils::findClosestIdxWithDistAngThr(
-    planning_utils::extractPoses(*trajectory_), current_pose_->pose, 3.0, M_PI_4);
+  output_cmd.velocity = target_point.longitudinal_velocity_mps;
+
+  const size_t idx_dist = static_cast<size_t>(
+    std::max(static_cast<int>((param_.curvature_calculation_distance) / param_.sampling_ds), 1));
+
+  // Find the points in trajectory to calculate curvature
+  size_t next_idx = output_traj.points.size() - 1;
+  size_t prev_idx = 0;
+
+  if (static_cast<size_t>(closest_idx_result.second) >= idx_dist) {
+    prev_idx = closest_idx_result.second - idx_dist;
+  }
+  if (output_traj.points.size() - 1 >= closest_idx_result.second + idx_dist) {
+    next_idx = closest_idx_result.second + idx_dist;
+  }
+
+  // Calculate curvature assuming the trajectory points interval is constant
+  double current_curvature = 0.0;
+
+  try {
+    current_curvature = calcCurvature(
+      output_traj.points.at(prev_idx), output_traj.points.at(closest_idx_result.second),
+      output_traj.points.at(next_idx));
+  } catch (std::exception const & e) {
+    // ...code that handles the error...
+    RCLCPP_WARN(rclcpp::get_logger("pure_pursuit"), "%s", e.what());
+  }
 
   const double lateral_error =
-    calcLateralError(current_pose_->pose, trajectory_->points.at(closest_idx_result.second));
+    calcLateralError(pose, output_traj.points.at(closest_idx_result.second));
+
   // Calculate lookahead distance
-  const bool is_reverse = (target_vel < 0);
+  const bool is_reverse = (output_cmd.velocity < 0);
   const double min_lookahead_distance =
     is_reverse ? param_.reverse_min_lookahead_distance : param_.min_lookahead_distance;
-  const double lookahead_distance = calcLookaheadDistance(
-    current_odometry_->twist.twist.linear.x, param_.lookahead_distance_ratio,
-    min_lookahead_distance, lateral_error, param_.lateral_error_ratio);
+
+  double lookahead_distance = min_lookahead_distance;
+
+  if (is_control_output) {
+    lookahead_distance = calcLookaheadDistance(
+      current_odometry_->twist.twist.linear.x, param_.lookahead_distance_ratio,
+      min_lookahead_distance, lateral_error, param_.lateral_error_ratio, current_curvature, 0.1);
+  } else {
+    lookahead_distance = calcLookaheadDistance(
+      output_cmd.velocity, param_.lookahead_distance_ratio, min_lookahead_distance, lateral_error,
+      param_.lateral_error_ratio, current_curvature, 0.1);
+  }
 
   // Set PurePursuit data
-  pure_pursuit_->setCurrentPose(current_pose_->pose);
-  pure_pursuit_->setWaypoints(planning_utils::extractPoses(*trajectory_));
+  pure_pursuit_->setCurrentPose(pose);
+  pure_pursuit_->setWaypoints(planning_utils::extractPoses(output_traj));
   pure_pursuit_->setLookaheadDistance(lookahead_distance);
 
   // Run PurePursuit
@@ -216,25 +360,13 @@ boost::optional<double> PurePursuitLateralController::calcTargetCurvature()
     return {};
   }
 
-  const auto kappa = pure_pursuit_result.second;
+  output_cmd.curvature = pure_pursuit_result.second;
 
   // Set debug data
-  debug_data_.next_target = pure_pursuit_->getLocationOfNextTarget();
-
-  return kappa;
-}
-
-boost::optional<autoware_auto_planning_msgs::msg::TrajectoryPoint>
-PurePursuitLateralController::calcTargetPoint() const
-{
-  const auto closest_idx_result = planning_utils::findClosestIdxWithDistAngThr(
-    planning_utils::extractPoses(*trajectory_), current_pose_->pose, 3.0, M_PI_4);
-
-  if (!closest_idx_result.first) {
-    RCLCPP_ERROR(node_->get_logger(), "cannot find closest waypoint");
-    return {};
+  if (is_control_output) {
+    debug_data_.next_target = pure_pursuit_->getLocationOfNextTarget();
   }
 
-  return trajectory_->points.at(closest_idx_result.second);
+  return output_cmd;
 }
 }  // namespace pure_pursuit
