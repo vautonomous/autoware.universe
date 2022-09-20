@@ -114,6 +114,7 @@ private:
 
   // Debug Publisher
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_marker_;
+  rclcpp::Publisher<Trajectory>::SharedPtr pub_predicted_trajectory_;
 
   void publishDebugMarker() const;
 

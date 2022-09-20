@@ -135,7 +135,8 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
   // Debug Publishers
   pub_debug_marker_ =
     node_->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/markers", 0);
-
+  pub_predicted_trajectory_ =
+    node_->create_publisher<Trajectory>("~/output/predicted_trajectory", 1);
   //  Wait for first current pose
   tf_utils::waitForTransform(tf_buffer_, "map", "base_link");
 }
@@ -170,7 +171,8 @@ void PurePursuitLateralController::setInputData(InputData const & input_data)
   current_steering_ = input_data.current_steering_ptr;
 }
 
-TrajectoryPoint PurePursuitLateralController::calcNextPose(const double dt, TrajectoryPoint & point, AckermannLateralCommand cmd)
+TrajectoryPoint PurePursuitLateralController::calcNextPose(
+  const double dt, TrajectoryPoint & point, AckermannLateralCommand cmd)
 {
   TrajectoryPoint output_p;
   double current_yaw = tf2::getYaw(point.pose.orientation);
@@ -181,7 +183,8 @@ TrajectoryPoint PurePursuitLateralController::calcNextPose(const double dt, Traj
   output_p.pose.position.z = point.pose.position.z;
   output_p.pose.orientation =
     point.pose.orientation +
-    createOrientationMsgFromYaw(((point.longitudinal_velocity_mps * tan(cmd.steering_tire_angle)) / param_.wheel_base) * dt);
+    createOrientationMsgFromYaw(
+      ((point.longitudinal_velocity_mps * tan(cmd.steering_tire_angle)) / param_.wheel_base) * dt);
   return output_p;
 }
 
@@ -193,9 +196,8 @@ boost::optional<LateralOutput> PurePursuitLateralController::run()
   }
   const auto num_of_iteration = std::max(
     static_cast<int>(std::ceil(param_.prediction_time_length / param_.prediction_time_period)), 1);
-  Trajectory predicted_trajectory;
-  predicted_trajectory.set__header(trajectory_->header);
 
+  Trajectory predicted_trajectory;
   AckermannLateralCommand cmd_msg;
 
   for (int i = 0; i < num_of_iteration; i++) {
@@ -211,11 +213,13 @@ boost::optional<LateralOutput> PurePursuitLateralController::run()
         publishDebugMarker();
       } else {
         RCLCPP_WARN_THROTTLE(
-          node_->get_logger(), *node_->get_clock(), 5000, "failed to solve pure_pursuit for control command calculation");
+          node_->get_logger(), *node_->get_clock(), 5000,
+          "failed to solve pure_pursuit for control command calculation");
         cmd_msg = generateCtrlCmdMsg({0.0});
       }
 
-      predicted_trajectory.points.push_back(calcNextPose(param_.prediction_time_period, predicted_trajectory.points.at(i), cmd_msg));
+      predicted_trajectory.points.push_back(
+        calcNextPose(param_.prediction_time_period, predicted_trajectory.points.at(i), cmd_msg));
     } else {
       const auto pp_output = calcTargetCurvature(false, predicted_trajectory.points.at(i).pose);
       AckermannLateralCommand tmp_msg;
@@ -225,17 +229,22 @@ boost::optional<LateralOutput> PurePursuitLateralController::run()
         predicted_trajectory.points.at(i).longitudinal_velocity_mps = pp_output->velocity;
       } else {
         RCLCPP_WARN_THROTTLE(
-          node_->get_logger(), *node_->get_clock(), 5000, "failed to solve pure_pursuit for prediction");
+          node_->get_logger(), *node_->get_clock(), 5000,
+          "failed to solve pure_pursuit for prediction");
         tmp_msg = generateCtrlCmdMsg({0.0});
       }
 
-      predicted_trajectory.points.push_back(calcNextPose(param_.prediction_time_period, predicted_trajectory.points.at(i), tmp_msg));
+      predicted_trajectory.points.push_back(
+        calcNextPose(param_.prediction_time_period, predicted_trajectory.points.at(i), tmp_msg));
     }
   }
 
   // for last point
-
   predicted_trajectory.points.back().longitudinal_velocity_mps = 0.0;
+
+  predicted_trajectory.header.frame_id = trajectory_->header.frame_id;
+  predicted_trajectory.header.stamp = node_->now();
+  pub_predicted_trajectory_->publish(predicted_trajectory);
 
   LateralOutput output;
   output.control_cmd = cmd_msg;
