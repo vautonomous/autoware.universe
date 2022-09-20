@@ -101,7 +101,7 @@ private:
   autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr trajectory_;
   nav_msgs::msg::Odometry::ConstSharedPtr current_odometry_;
   autoware_auto_vehicle_msgs::msg::SteeringReport::ConstSharedPtr current_steering_;
-
+  boost::optional<AckermannLateralCommand> prev_cmd;
   bool isDataReady();
 
   void onTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);

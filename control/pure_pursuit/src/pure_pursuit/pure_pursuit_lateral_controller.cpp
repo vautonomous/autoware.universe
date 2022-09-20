@@ -82,9 +82,9 @@ double calcLookaheadDistance(
   const double lateral_error, const double lateral_error_ratio, const double curvature,
   const double curvature_ratio)
 {
-  const double lookahead_distance =
-    min_lookahead_distance + lateral_error_ratio * std::abs(lateral_error) +
-    lookahead_distance_ratio * std::abs(velocity) - curvature_ratio * std::abs(curvature);
+  const double lookahead_distance = lateral_error_ratio * std::abs(lateral_error) +
+                                    lookahead_distance_ratio * std::abs(velocity) -
+                                    curvature_ratio * std::abs(curvature);
   return std::max(lookahead_distance, min_lookahead_distance);
 }
 
@@ -122,7 +122,7 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
   // Algorithm Parameters
   param_.lookahead_distance_ratio =
     node_->declare_parameter<double>("lookahead_distance_ratio", 2.2);
-  param_.min_lookahead_distance = node_->declare_parameter<double>("min_lookahead_distance", 4.0);
+  param_.min_lookahead_distance = node_->declare_parameter<double>("min_lookahead_distance", 0.5);
   param_.reverse_min_lookahead_distance =
     node_->declare_parameter<double>("reverse_min_lookahead_distance", 7.0);
   param_.converged_steer_rad_ = node_->declare_parameter<double>("converged_steer_rad", 0.1);
@@ -205,17 +205,22 @@ boost::optional<LateralOutput> PurePursuitLateralController::run()
       TrajectoryPoint p;
       p.pose = current_pose_->pose;
       p.longitudinal_velocity_mps = current_odometry_->twist.twist.linear.x;
-      predicted_trajectory.points.push_back(p);
+      predicted_trajectory.points.at(i) = p;
 
       const auto pp_output = calcTargetCurvature(true, predicted_trajectory.points.at(i).pose);
       if (pp_output) {
         cmd_msg = generateCtrlCmdMsg(pp_output->curvature);
+        *prev_cmd = cmd_msg;
         publishDebugMarker();
       } else {
         RCLCPP_WARN_THROTTLE(
           node_->get_logger(), *node_->get_clock(), 5000,
           "failed to solve pure_pursuit for control command calculation");
-        cmd_msg = generateCtrlCmdMsg({0.0});
+        if(prev_cmd){
+          cmd_msg = *prev_cmd;
+        } else {
+          cmd_msg = generateCtrlCmdMsg({0.0});
+        }
       }
 
       predicted_trajectory.points.push_back(
