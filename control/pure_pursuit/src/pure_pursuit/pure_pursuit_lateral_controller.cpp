@@ -174,17 +174,19 @@ void PurePursuitLateralController::setInputData(InputData const & input_data)
 TrajectoryPoint PurePursuitLateralController::calcNextPose(
   const double dt, TrajectoryPoint & point, AckermannLateralCommand cmd)
 {
+
+  geometry_msgs::msg::Transform transform;
+  transform.translation =
+    tier4_autoware_utils::createTranslation(point.longitudinal_velocity_mps * dt, 0.0, 0.0);
+  transform.rotation = createOrientationMsgFromYaw(
+    ((point.longitudinal_velocity_mps * tan(cmd.steering_tire_angle)) / param_.wheel_base) * dt);
   TrajectoryPoint output_p;
-  double current_yaw = tf2::getYaw(point.pose.orientation);
-  output_p.pose.position.x =
-    point.pose.position.x + point.longitudinal_velocity_mps * cos(current_yaw) * dt;
-  output_p.pose.position.y =
-    point.pose.position.y + point.longitudinal_velocity_mps * sin(current_yaw) * dt;
-  output_p.pose.position.z = point.pose.position.z;
-  output_p.pose.orientation =
-    point.pose.orientation +
-    createOrientationMsgFromYaw(
-      ((point.longitudinal_velocity_mps * tan(cmd.steering_tire_angle)) / param_.wheel_base) * dt);
+
+  tf2::Transform tf_pose;
+  tf2::Transform tf_offset;
+  tf2::fromMsg(transform, tf_offset);
+  tf2::fromMsg(point.pose, tf_pose);
+  tf2::toMsg(tf_pose * tf_offset, output_p.pose);
   return output_p;
 }
 
@@ -205,26 +207,28 @@ boost::optional<LateralOutput> PurePursuitLateralController::run()
       TrajectoryPoint p;
       p.pose = current_pose_->pose;
       p.longitudinal_velocity_mps = current_odometry_->twist.twist.linear.x;
-      predicted_trajectory.points.at(i) = p;
+      predicted_trajectory.points.push_back(p);
 
       const auto pp_output = calcTargetCurvature(true, predicted_trajectory.points.at(i).pose);
+
       if (pp_output) {
         cmd_msg = generateCtrlCmdMsg(pp_output->curvature);
-        *prev_cmd = cmd_msg;
+        prev_cmd = boost::optional<AckermannLateralCommand>(cmd_msg);
         publishDebugMarker();
       } else {
         RCLCPP_WARN_THROTTLE(
           node_->get_logger(), *node_->get_clock(), 5000,
           "failed to solve pure_pursuit for control command calculation");
-        if(prev_cmd){
+        if (prev_cmd) {
           cmd_msg = *prev_cmd;
         } else {
           cmd_msg = generateCtrlCmdMsg({0.0});
         }
       }
+      TrajectoryPoint p2;
+      p2 = calcNextPose(param_.prediction_time_period, predicted_trajectory.points.at(i), cmd_msg);
+      predicted_trajectory.points.push_back(p2);
 
-      predicted_trajectory.points.push_back(
-        calcNextPose(param_.prediction_time_period, predicted_trajectory.points.at(i), cmd_msg));
     } else {
       const auto pp_output = calcTargetCurvature(false, predicted_trajectory.points.at(i).pose);
       AckermannLateralCommand tmp_msg;
@@ -238,7 +242,6 @@ boost::optional<LateralOutput> PurePursuitLateralController::run()
           "failed to solve pure_pursuit for prediction");
         tmp_msg = generateCtrlCmdMsg({0.0});
       }
-
       predicted_trajectory.points.push_back(
         calcNextPose(param_.prediction_time_period, predicted_trajectory.points.at(i), tmp_msg));
     }

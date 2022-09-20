@@ -66,8 +66,9 @@
     lateral_error_ratio: 4.2
     sampling_ds: 0.1
     curvature_ratio: 32.5
-    prediction_time_period: 4.0
-    prediction_time_length: 0.2
+    prediction_time_period: 0.4
+    prediction_time_length: 5.0
+
     # vehicle parameters
     vehicle:
       cg_to_front_m: 1.228
