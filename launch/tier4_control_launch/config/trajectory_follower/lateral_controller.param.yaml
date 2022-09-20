@@ -63,7 +63,7 @@
     lookahead_distance_ratio: 1.8
     min_lookahead_distance: 4.259
     reverse_min_lookahead_distance: 7.0
-    lateral_error_ratio: 4.2
+    lateral_error_ratio: 3.5
     sampling_ds: 0.1
     curvature_ratio: 32.5
     prediction_time_period: 0.4
