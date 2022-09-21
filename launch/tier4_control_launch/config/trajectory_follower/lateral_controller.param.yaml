@@ -65,9 +65,9 @@
     reverse_min_lookahead_distance: 7.0
     lateral_error_ratio: 3.3
     sampling_ds: 0.1
-    curvature_ratio: 40.0
-    prediction_time_period: 0.4
-    prediction_time_length: 5.0
+    curvature_ratio: 30.0
+    prediction_time_period: 0.5
+    prediction_time_length: 10.0
 
     # vehicle parameters
     vehicle:
