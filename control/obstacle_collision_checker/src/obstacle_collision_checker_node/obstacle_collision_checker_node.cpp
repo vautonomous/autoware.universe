@@ -71,7 +71,7 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
   transform_listener_ = std::make_shared<tier4_autoware_utils::TransformListener>(this);
 
   sub_obstacle_pointcloud_ = create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input/obstacle_pointcloud", 1,
+    "input/obstacle_pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&ObstacleCollisionCheckerNode::onObstaclePointcloud, this, _1));
   sub_reference_trajectory_ = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
     "input/reference_trajectory", 1,
@@ -194,8 +194,16 @@ void ObstacleCollisionCheckerNode::onTimer()
   current_pose_ = self_pose_listener_->getCurrentPose();
   if (obstacle_pointcloud_) {
     const auto & header = obstacle_pointcloud_->header;
-    obstacle_transform_ = transform_listener_->getTransform(
-      "map", header.frame_id, header.stamp, rclcpp::Duration::from_seconds(0.01));
+
+    try {
+      obstacle_transform_ = transform_listener_->getTransform(
+              "map", header.frame_id, header.stamp, rclcpp::Duration::from_seconds(0.01));
+
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_INFO(
+              this->get_logger(), "Could not transform map to %s: %s", header.frame_id.c_str(), ex.what());
+      return;
+    }
   }
 
   if (!isDataReady()) {
@@ -213,6 +221,8 @@ void ObstacleCollisionCheckerNode::onTimer()
   input_.predicted_trajectory = predicted_trajectory_;
   input_.current_twist = current_twist_;
 
+  RCLCPP_INFO(
+          this->get_logger(), "Coming here.");
   output_ = obstacle_collision_checker_->update(input_);
 
   updater_.force_update();
