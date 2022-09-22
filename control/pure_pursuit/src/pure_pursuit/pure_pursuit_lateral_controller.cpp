@@ -167,9 +167,9 @@ namespace pure_pursuit {
 
       geometry_msgs::msg::Transform transform;
       transform.translation =
-              tier4_autoware_utils::createTranslation(point.longitudinal_velocity_mps * dt, 0.0, 0.0);
+              tier4_autoware_utils::createTranslation(dt, 0.0, 0.0);
       transform.rotation = createOrientationMsgFromYaw(
-              ((point.longitudinal_velocity_mps * tan(cmd.steering_tire_angle)) / param_.wheel_base) * dt);
+              ((tan(cmd.steering_tire_angle) * dt) / param_.wheel_base));
       TrajectoryPoint output_p;
 
       tf2::Transform tf_pose;
