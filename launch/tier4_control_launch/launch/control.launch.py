@@ -49,6 +49,11 @@ def launch_setup(context, *args, **kwargs):
         "obstacle_collision_checker",
         "obstacle_collision_checker.param.yaml",
     )
+
+    print(obstacle_collision_checker_param_path)
+
+
+
     with open(obstacle_collision_checker_param_path, "r") as f:
         obstacle_collision_checker_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
