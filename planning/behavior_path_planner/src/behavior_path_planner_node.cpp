@@ -566,10 +566,28 @@ void BehaviorPathPlannerNode::run()
   const auto output = bt_manager_->run(planner_data);
 
   // path handling
-  const auto path = getPath(output, planner_data);
+  auto path = getPath(output, planner_data);
 
-  // update planner data
-  planner_data_->prev_output_path = path;
+  // check if path orientation is valid
+  if (!path->points.empty()) {
+    const auto closest_path_point_idx = motion_utils::findNearestIndex(path->points,
+                                                                       planner_data->self_pose->pose.position);
+    const auto yaw_dev = tier4_autoware_utils::calcYawDeviation(path->points.at(closest_path_point_idx).point.pose,
+                                                                planner_data->self_pose->pose);
+
+    if (std::abs(yaw_dev) > M_PI / 2.0) {
+      RCLCPP_WARN(get_logger(), "Path orientation is invalid. Path yaw deviation: %f (deg)", yaw_dev * 180 / M_PI);
+      if (!planner_data_->prev_output_path->points.empty()) {
+        path = planner_data_->prev_output_path;
+      } else {
+        return;
+      }
+    } else {
+      // update planner data
+      planner_data_->prev_output_path = path;
+    }
+  }
+
   mutex_pd_.unlock();
 
   PathWithLaneId clipped_path;
