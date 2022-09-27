@@ -20,8 +20,8 @@
         /autoware/control/autonomous_driving/node_alive_monitoring: default
         /autoware/control/autonomous_driving/performance_monitoring/lane_departure: default
         /autoware/control/control_command_gate/node_alive_monitoring: default
-
         /autoware/control/autonomous_driving/performance_monitoring/obstacle_collision_checker: default
+        /autoware/control/autonomous_driving/performance_monitoring/trajectory_deviation: default
 
         /autoware/localization/node_alive_monitoring: default
         /autoware/localization/performance_monitoring/matching_score: default
