@@ -387,7 +387,7 @@ void LaneDepartureCheckerNode::checkLaneDeparture(
   }
 
   if (output_.is_out_of_lane) {
-    level = DiagStatus::ERROR;
+    level = DiagStatus::WARN;
     msg = "vehicle is out of lane";
   }
 
