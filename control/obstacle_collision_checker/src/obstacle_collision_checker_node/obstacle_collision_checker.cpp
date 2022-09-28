@@ -113,15 +113,15 @@ Output ObstacleCollisionChecker::update(const Input & input)
 
 
   output.debug_cloud = obstacle_pointcloud;
-  RCLCPP_WARN(
-          rclcpp::get_logger("obstacle_collision_checker"),
-          "[ObstacleCollisionChecker] obstacle_pointcloud Pointcloud size : %ld", obstacle_pointcloud.points.size() );
-
+//  RCLCPP_WARN(
+//          rclcpp::get_logger("obstacle_collision_checker"),
+//          "[ObstacleCollisionChecker] obstacle_pointcloud Pointcloud size : %ld", obstacle_pointcloud.points.size() );
+//
   const auto filtered_obstacle_pointcloud = filterPointCloudByTrajectory(
     obstacle_pointcloud, output.resampled_trajectory, param_.search_radius);
-  RCLCPP_WARN(
-          rclcpp::get_logger("obstacle_collision_checker"),
-          "[ObstacleCollisionChecker] filtered_obstacle_pointcloud Pointcloud size : %ld", filtered_obstacle_pointcloud.points.size() );
+//  RCLCPP_WARN(
+//          rclcpp::get_logger("obstacle_collision_checker"),
+//          "[ObstacleCollisionChecker] filtered_obstacle_pointcloud Pointcloud size : %ld", filtered_obstacle_pointcloud.points.size() );
 
 
 
@@ -178,7 +178,7 @@ autoware_auto_planning_msgs::msg::Trajectory ObstacleCollisionChecker::cutTrajec
     const auto remain_distance = length - total_length;
 
     // Over length
-    if (remain_distance <= 0) {
+    if (remain_distance <= 0.0) {
       break;
     }
 
@@ -254,7 +254,8 @@ bool ObstacleCollisionChecker::willCollide(
   const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud,
   const std::vector<LinearRing2d> & vehicle_footprints)
 {
-  for (const auto & vehicle_footprint : vehicle_footprints) {
+  for (size_t i = 1; i < vehicle_footprints.size(); i++) {
+    const auto & vehicle_footprint = vehicle_footprints.at(i);
     if (hasCollision(obstacle_pointcloud, vehicle_footprint)) {
       RCLCPP_WARN(
         rclcpp::get_logger("obstacle_collision_checker"), "ObstacleCollisionChecker::willCollide");
@@ -272,9 +273,9 @@ bool ObstacleCollisionChecker::hasCollision(
   for (const auto & point : obstacle_pointcloud.points) {
     if (boost::geometry::within(
           tier4_autoware_utils::Point2d{point.x, point.y}, vehicle_footprint)) {
-      RCLCPP_WARN(
-        rclcpp::get_logger("obstacle_collision_checker"),
-        "[ObstacleCollisionChecker] Collide to Point x: %f y: %f", point.x, point.y);
+//      RCLCPP_WARN(
+//        rclcpp::get_logger("obstacle_collision_checker"),
+//        "[ObstacleCollisionChecker] Collide to Point x: %f y: %f", point.x, point.y);
       return true;
     }
   }

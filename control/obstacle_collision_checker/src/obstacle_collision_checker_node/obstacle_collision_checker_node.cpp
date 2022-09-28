@@ -220,8 +220,8 @@ void ObstacleCollisionCheckerNode::onTimer()
   input_.predicted_trajectory = predicted_trajectory_;
   input_.current_twist = current_twist_;
 
-  RCLCPP_INFO(
-          this->get_logger(), "Coming here.");
+//  RCLCPP_INFO(
+//          this->get_logger(), "Coming here.");
   output_ = obstacle_collision_checker_->update(input_);
 
   updater_.force_update();
