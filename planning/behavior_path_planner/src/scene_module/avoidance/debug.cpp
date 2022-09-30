@@ -58,6 +58,7 @@ MarkerArray createAvoidPointMarkerArray(
       marker_s.pose = sp.start;
       // shiftPose(&marker_s.pose, current_shift);  // old
       shiftPose(&marker_s.pose, sp.start_length);
+      marker_s.color = createMarkerColor(1.0, 0.0, 0.0, 0.9);
       msg.markers.push_back(marker_s);
 
       // end point
@@ -65,6 +66,7 @@ MarkerArray createAvoidPointMarkerArray(
       marker_e.id = id++;
       marker_e.pose = sp.end;
       shiftPose(&marker_e.pose, sp.length);
+      marker_e.color = createMarkerColor(0.0, 0.0, 1.0, 0.9);
       msg.markers.push_back(marker_e);
 
       // start-to-end line
