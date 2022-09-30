@@ -148,11 +148,17 @@ void AutowareStatePanel::onInitialize()
   sub_emergency_ = raw_node_->create_subscription<tier4_external_api_msgs::msg::Emergency>(
     "/api/autoware/get/emergency", 10, std::bind(&AutowareStatePanel::onEmergencyStatus, this, _1));
 
+  sub_emergency_state_ = raw_node_->create_subscription<autoware_auto_system_msgs::msg::EmergencyState>(
+    "/system/emergency/emergency_state", 1, std::bind(&AutowareStatePanel::onEmergencyState, this, _1));
+
   client_engage_ = raw_node_->create_client<tier4_external_api_msgs::srv::Engage>(
     "/api/external/set/engage", rmw_qos_profile_services_default);
 
   client_emergency_stop_ = raw_node_->create_client<tier4_external_api_msgs::srv::SetEmergency>(
     "/api/autoware/set/emergency", rmw_qos_profile_services_default);
+
+  clear_emergency_ = raw_node_->create_client<std_srvs::srv::Trigger>(
+    "/system/clear_emergency", rmw_qos_profile_services_default);
 
   pub_velocity_limit_ = raw_node_->create_publisher<tier4_planning_msgs::msg::VelocityLimit>(
     "/planning/scenario_planning/max_velocity_default", rclcpp::QoS{1}.transient_local());
@@ -164,6 +170,14 @@ void AutowareStatePanel::onInitialize()
     "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/"
     "path_change_approval",
     rclcpp::QoS{1}.transient_local());
+}
+
+void AutowareStatePanel::onEmergencyState(
+  autoware_auto_system_msgs::msg::EmergencyState::ConstSharedPtr msg)
+{
+  current_emergency_state = (msg->state == autoware_auto_system_msgs::msg::EmergencyState::MRM_OPERATING) ||
+                  (msg->state == autoware_auto_system_msgs::msg::EmergencyState::MRM_SUCCEEDED) ||
+                  (msg->state == autoware_auto_system_msgs::msg::EmergencyState::MRM_FAILED);
 }
 
 void AutowareStatePanel::onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
@@ -268,8 +282,8 @@ void AutowareStatePanel::onEngageStatus(
 void AutowareStatePanel::onEmergencyStatus(
   const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg)
 {
-  current_emergency_ = msg->emergency;
-  if (msg->emergency) {
+  current_emergency_ = msg->emergency || current_emergency_state;
+  if (current_emergency_) {
     emergency_button_ptr_->setText(QString::fromStdString("Clear Emergency"));
     emergency_button_ptr_->setStyleSheet("background-color: #FF0000;");
   } else {
@@ -326,6 +340,19 @@ void AutowareStatePanel::onClickEmergencyButton()
           raw_node_->get_logger(), "service failed: %s", response->status.message.c_str());
       }
     });
+
+  if(current_emergency_state){
+    auto request_clear_system_emergency = std::make_shared<std_srvs::srv::Trigger::Request>();
+    clear_emergency_->async_send_request(request_clear_system_emergency, [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result){
+      const auto & response = result.get();
+      if (response->success) {
+        RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
+      } else {
+        RCLCPP_WARN(
+          raw_node_->get_logger(), "service failed: %s", response->message.c_str());
+      }
+    });
+  }
 }
 void AutowareStatePanel::onClickGateMode()
 {
