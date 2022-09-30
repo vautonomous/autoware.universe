@@ -12,7 +12,7 @@
 
       threshold_distance_object_is_on_center: 1.0 # [m]
       threshold_speed_object_is_stopped: 1.0      # [m/s]
-      object_check_forward_distance: 150.0        # [m]
+      object_check_forward_distance: 50.0        # [m]
       object_check_backward_distance: 2.0         # [m]
       lateral_collision_margin: 0.5               # [m]
       lateral_collision_safety_buffer: 0.5        # [m]
