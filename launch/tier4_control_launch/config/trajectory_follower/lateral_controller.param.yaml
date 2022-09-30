@@ -65,7 +65,8 @@
     reverse_min_lookahead_distance: 7.0
     lateral_error_ratio: 3.6
     sampling_ds: 0.5
-    curvature_ratio: 50.0
+    curvature_ratio: 120.0
+    curvature_calculation_distance: 4.0
     prediction_time_period: 1.0
     prediction_time_length: 23.0
 
