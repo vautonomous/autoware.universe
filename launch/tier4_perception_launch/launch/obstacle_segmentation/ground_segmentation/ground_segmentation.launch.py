@@ -258,9 +258,11 @@ class GroundSegmentationPipeline:
             parameters=[
                 {
                     "base_frame": "base_link",
-                    "general_max_slope": 30.0,
-                    "local_max_slope": 10.0,
+                    "general_max_slope": 20.0,
+                    "local_max_slope": 6.0,
                     "initial_max_slope": 10.0,
+                    "radial_divider_angle": 1.0,
+                    "min_height_threshold": 0.35,
                     "min_x": -1.60,
                     "max_x": 6.709,
                     "min_y": -2.5595,
