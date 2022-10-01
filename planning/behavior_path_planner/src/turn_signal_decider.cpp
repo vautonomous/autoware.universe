@@ -111,6 +111,8 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
         } else if (lane_attribute == std::string("right")) {
           turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
           distance = distance_from_vehicle_front;
+        } else if (lane_attribute == std::string("straight") || lane_attribute == std::string("none")) {
+          turn_signal.command = TurnIndicatorsCommand::DISABLE;
         }
       }
     }
