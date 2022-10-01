@@ -74,6 +74,7 @@ def launch_setup(context, *args, **kwargs):
         namespace="",
         remappings=[
             ("~/input/objects", "/perception/object_recognition/objects"),
+            ("~/input/predicted_trajectory", "/control/trajectory_follower/lateral/predicted_trajectory"),
             ("~/input/path", LaunchConfiguration("input_path_topic")),
             ("~/output/path", "obstacle_avoidance_planner/trajectory"),
         ],

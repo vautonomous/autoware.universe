@@ -287,6 +287,8 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   debug_msg_pub_ =
     create_publisher<tier4_debug_msgs::msg::StringStamped>("~/debug/calculation_time", 1);
 
+  use_predicted_trajectory_ = declare_parameter<bool>("option.use_predicted_trajectory");
+
   // subscriber
   path_sub_ = create_subscription<autoware_auto_planning_msgs::msg::Path>(
     "~/input/path", rclcpp::QoS{1},
@@ -300,6 +302,12 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   is_avoidance_sub_ = create_subscription<tier4_planning_msgs::msg::EnableAvoidance>(
     "/planning/scenario_planning/lane_driving/obstacle_avoidance_approval", rclcpp::QoS{10},
     std::bind(&ObstacleAvoidancePlanner::enableAvoidanceCallback, this, std::placeholders::_1));
+  if (use_predicted_trajectory_) {
+    predicted_traj_sub_ = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
+      "~/input/predicted_trajectory", 1,
+      std::bind(
+        &ObstacleAvoidancePlanner::predictedTrajectoryCallback, this, std::placeholders::_1));
+  }
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   {  // vehicle param
@@ -564,6 +572,8 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   resetPlanning();
 
   self_pose_listener_.waitForFirstPose();
+
+  predicted_traj_ = std::make_unique<autoware_auto_planning_msgs::msg::Trajectory>();
 }
 
 rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback(
@@ -858,6 +868,13 @@ void ObstacleAvoidancePlanner::enableAvoidanceCallback(
   const tier4_planning_msgs::msg::EnableAvoidance::SharedPtr msg)
 {
   enable_avoidance_ = msg->enable_avoidance;
+}
+
+void ObstacleAvoidancePlanner::predictedTrajectoryCallback(
+  const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr msg)
+{
+  predicted_traj_->header = msg->header;
+  predicted_traj_->points = msg->points;
 }
 
 void ObstacleAvoidancePlanner::resetPlanning()
@@ -1193,19 +1210,47 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
     return traj_points.size();
   }();
 
+  // Check if any predicted trajectory point is outside of drivable area
+  bool is_outside_predicted = false;
+  size_t closest_out_index_predicted = SIZE_MAX;
+  if (use_predicted_trajectory_ && !predicted_traj_->points.empty()) {
+    for (auto const & predicted_point : predicted_traj_->points) {
+      // calculate the first point being outside drivable area on predicted path
+      is_outside_predicted = cv_drivable_area_utils::isOutsideDrivableAreaFromRectangleFootprint(
+        predicted_point, road_clearance_map, map_info, vehicle_param_);
+
+      if (is_outside_predicted) {
+        // get the closest index on trajectory
+        closest_out_index_predicted =
+          motion_utils::findNearestIndex(traj_points, predicted_point.pose.position);
+        break;
+      }
+    }
+  }
+
+  bool is_outside = false;
+  size_t out_index = SIZE_MAX;
   for (size_t i = nearest_idx; i < end_idx; ++i) {
     const auto & traj_point = traj_points.at(i);
 
     // calculate the first point being outside drivable area
-    const bool is_outside = cv_drivable_area_utils::isOutsideDrivableAreaFromRectangleFootprint(
+    is_outside = cv_drivable_area_utils::isOutsideDrivableAreaFromRectangleFootprint(
       traj_point, road_clearance_map, map_info, vehicle_param_);
 
-    // only insert zero velocity to the first point outside drivable area
     if (is_outside) {
-      traj_points[i].longitudinal_velocity_mps = 0.0;
-      debug_data_ptr_->stop_pose_by_drivable_area = traj_points[i].pose;
+      out_index = i;
       break;
     }
+  }
+
+  if (is_outside || is_outside_predicted) {
+    size_t first_stop_idx = std::min(out_index, closest_out_index_predicted);
+
+    int stop_drivable_area_index = std::max(first_stop_idx - 2, static_cast<size_t>(0));
+
+    // only insert zero velocity to the point 2 index before the first point outside drivable area
+    traj_points[stop_drivable_area_index].longitudinal_velocity_mps = 0.0;
+    debug_data_ptr_->stop_pose_by_drivable_area = traj_points[stop_drivable_area_index].pose;
   }
 
   debug_data_ptr_->msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__)
