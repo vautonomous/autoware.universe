@@ -332,17 +332,19 @@ void AutowareStatePanel::onClickEmergencyButton()
   request->emergency = !current_external_emergency_;
 
   RCLCPP_INFO(raw_node_->get_logger(), request->emergency ? "Set Emergency" : "Clear Emergency");
+  if(request->emergency){
+    client_emergency_stop_->async_send_request(
+      request, [this](rclcpp::Client<SetEmergency>::SharedFuture result) {
+        const auto & response = result.get();
+        if (response->status.code == ResponseStatus::SUCCESS) {
+          RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
+        } else {
+          RCLCPP_WARN(
+            raw_node_->get_logger(), "service failed: %s", response->status.message.c_str());
+        }
+      });
+  }
 
-  client_emergency_stop_->async_send_request(
-    request, [this](rclcpp::Client<SetEmergency>::SharedFuture result) {
-      const auto & response = result.get();
-      if (response->status.code == ResponseStatus::SUCCESS) {
-        RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
-      } else {
-        RCLCPP_WARN(
-          raw_node_->get_logger(), "service failed: %s", response->status.message.c_str());
-      }
-    });
 
   if(current_external_emergency_){
     auto request_clear_external_emergency = std::make_shared<std_srvs::srv::Trigger::Request>();
