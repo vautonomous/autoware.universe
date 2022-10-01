@@ -161,7 +161,7 @@ void AutowareStatePanel::onInitialize()
     "/system/clear_emergency", rmw_qos_profile_services_default);
 
   client_clear_external_emergency_ = raw_node_->create_client<std_srvs::srv::Trigger>(
-    "~/clear_external_emergency_stop", rmw_qos_profile_services_default);
+    "/control/vehicle_cmd_gate/clear_external_emergency_stop", rmw_qos_profile_services_default);
 
   pub_velocity_limit_ = raw_node_->create_publisher<tier4_planning_msgs::msg::VelocityLimit>(
     "/planning/scenario_planning/max_velocity_default", rclcpp::QoS{1}.transient_local());
@@ -285,8 +285,8 @@ void AutowareStatePanel::onEngageStatus(
 void AutowareStatePanel::onEmergencyStatus(
   const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg)
 {
-  current_emergency_ = msg->emergency || current_emergency_state;
-  if (current_emergency_) {
+  current_external_emergency_ = msg->emergency;
+  if (current_external_emergency_ || current_emergency_state) {
     emergency_button_ptr_->setText(QString::fromStdString("Clear Emergency"));
     emergency_button_ptr_->setStyleSheet("background-color: #FF0000;");
   } else {
@@ -329,7 +329,7 @@ void AutowareStatePanel::onClickEmergencyButton()
   using tier4_external_api_msgs::srv::SetEmergency;
 
   auto request = std::make_shared<SetEmergency::Request>();
-  request->emergency = !current_emergency_;
+  request->emergency = !current_external_emergency_;
 
   RCLCPP_INFO(raw_node_->get_logger(), request->emergency ? "Set Emergency" : "Clear Emergency");
 
@@ -343,6 +343,19 @@ void AutowareStatePanel::onClickEmergencyButton()
           raw_node_->get_logger(), "service failed: %s", response->status.message.c_str());
       }
     });
+
+  if(current_external_emergency_){
+    auto request_clear_external_emergency = std::make_shared<std_srvs::srv::Trigger::Request>();
+    client_clear_external_emergency_->async_send_request(request_clear_external_emergency, [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result){
+      const auto & response = result.get();
+      if (response->success) {
+        RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
+      } else {
+        RCLCPP_WARN(
+          raw_node_->get_logger(), "service failed: %s", response->message.c_str());
+      }
+    });
+  }
 
   if(current_emergency_state){
     auto request_clear_system_emergency = std::make_shared<std_srvs::srv::Trigger::Request>();
