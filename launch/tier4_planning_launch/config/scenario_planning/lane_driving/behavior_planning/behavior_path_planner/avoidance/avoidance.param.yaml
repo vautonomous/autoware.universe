@@ -15,7 +15,7 @@
       object_check_forward_distance: 50.0        # [m]
       object_check_backward_distance: 2.0         # [m]
       lateral_collision_margin: 0.5               # [m]
-      lateral_collision_safety_buffer: 0.5        # [m]
+      lateral_collision_safety_buffer: 1.0        # [m]
 
       prepare_time: 2.0                           # [s]
       min_prepare_distance: 1.0                   # [m]
@@ -32,7 +32,7 @@
       nominal_lateral_jerk: 0.1   # [m/s3]
       max_lateral_jerk: 0.4       # [m/s3]
 
-      object_hold_max_count: 20
+      object_last_seen_threshold: 2.0   # [s]
 
       # For prevention of large acceleration while avoidance
       min_avoidance_speed_for_acc_prevention: 3.0  # [m/s]

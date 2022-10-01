@@ -69,11 +69,11 @@
         num_curvature_sampling_points: 5 # number of sampling points when calculating curvature
         delta_arc_length_for_mpt_points: 0.5 # delta arc length when generating mpt [m]
 
-      # kinematics:
+      kinematics:
         # If this parameter is commented out, the parameter is set as below by default.
         # The logic could be `optimization_center_offset = vehicle_info.wheel_base * 0.8`
         # The 0.8 scale is adopted as it performed the best.
-        # optimization_center_offset: 2.3 # optimization center offset from base link
+        optimization_center_offset: 0.0 # optimization center offset from base link
 
     # replanning & trimming trajectory param outside algorithm
     replan:
@@ -105,10 +105,10 @@
 
         clearance:  # clearance(distance) between vehicle and roads/objects when generating trajectory
           hard_clearance_from_road: 0.0 # clearance from road boundary[m]
-          soft_clearance_from_road: 0.3 # clearance from road boundary[m]
-          soft_second_clearance_from_road: 1.0 # clearance from road boundary[m]
+          soft_clearance_from_road: 0.1 # clearance from road boundary[m]
+          soft_second_clearance_from_road: 0.1 # clearance from road boundary[m]
           clearance_from_object: 0.5 # clearance from object[m]
-          extra_desired_clearance_from_road: 0.1 # extra desired clearance from road
+          extra_desired_clearance_from_road: 0.0 # extra desired clearance from road
 
         weight:
           soft_avoidance_weight: 1000.0 # slack weight for lateral error around the middle point
@@ -136,16 +136,16 @@
             l_inf_norm: true
             soft_constraint: true
             hard_constraint: false
-            # two_step_soft_constraint: false
+            two_step_soft_constraint: true
 
           vehicle_circles:
             method: "rear_drive"
 
             uniform_circle:
               num: 3
-              radius_ratio: 0.8
+              radius_ratio: 1.1
 
             rear_drive:
               num_for_calculation: 3
-              front_radius_ratio: 1.0
-              rear_radius_ratio: 1.0
+              front_radius_ratio: 1.1
+              rear_radius_ratio: 1.1
