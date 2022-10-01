@@ -157,8 +157,11 @@ void AutowareStatePanel::onInitialize()
   client_emergency_stop_ = raw_node_->create_client<tier4_external_api_msgs::srv::SetEmergency>(
     "/api/autoware/set/emergency", rmw_qos_profile_services_default);
 
-  clear_emergency_ = raw_node_->create_client<std_srvs::srv::Trigger>(
+  client_clear_emergency_ = raw_node_->create_client<std_srvs::srv::Trigger>(
     "/system/clear_emergency", rmw_qos_profile_services_default);
+
+  client_clear_external_emergency_ = raw_node_->create_client<std_srvs::srv::Trigger>(
+    "~/clear_external_emergency_stop", rmw_qos_profile_services_default);
 
   pub_velocity_limit_ = raw_node_->create_publisher<tier4_planning_msgs::msg::VelocityLimit>(
     "/planning/scenario_planning/max_velocity_default", rclcpp::QoS{1}.transient_local());
@@ -343,7 +346,7 @@ void AutowareStatePanel::onClickEmergencyButton()
 
   if(current_emergency_state){
     auto request_clear_system_emergency = std::make_shared<std_srvs::srv::Trigger::Request>();
-    clear_emergency_->async_send_request(request_clear_system_emergency, [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result){
+    client_clear_emergency_->async_send_request(request_clear_system_emergency, [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result){
       const auto & response = result.get();
       if (response->success) {
         RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
