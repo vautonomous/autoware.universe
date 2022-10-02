@@ -136,7 +136,7 @@
             l_inf_norm: true
             soft_constraint: true
             hard_constraint: false
-            two_step_soft_constraint: true
+            two_step_soft_constraint: false
 
           vehicle_circles:
             method: "rear_drive"
@@ -147,5 +147,5 @@
 
             rear_drive:
               num_for_calculation: 3
-              front_radius_ratio: 1.1
-              rear_radius_ratio: 1.1
+              front_radius_ratio: 1.0
+              rear_radius_ratio: 1.0
