@@ -1212,7 +1212,7 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
 
   // Check if any predicted trajectory point is outside of drivable area
   bool is_outside_predicted = false;
-  size_t closest_out_index_predicted = SIZE_MAX;
+  boost::optional<size_t> closest_out_index_predicted = SIZE_MAX;
   if (use_predicted_trajectory_ && !predicted_traj_->points.empty()) {
     for (auto const & predicted_point : predicted_traj_->points) {
       // calculate the first point being outside drivable area on predicted path
@@ -1222,7 +1222,10 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
       if (is_outside_predicted) {
         // get the closest index on trajectory
         closest_out_index_predicted =
-          motion_utils::findNearestIndex(traj_points, predicted_point.pose.position);
+          motion_utils::findNearestIndex(traj_points, predicted_point.pose, 3.0);
+        if (!closest_out_index_predicted) {
+          closest_out_index_predicted = SIZE_MAX;
+        }
         break;
       }
     }
@@ -1244,7 +1247,7 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
   }
 
   if (is_outside || is_outside_predicted) {
-    size_t first_stop_idx = std::min(out_index, closest_out_index_predicted);
+    size_t first_stop_idx = std::min(out_index, closest_out_index_predicted.get());
 
     int stop_drivable_area_index = std::max(first_stop_idx - 2, static_cast<size_t>(0));
 
