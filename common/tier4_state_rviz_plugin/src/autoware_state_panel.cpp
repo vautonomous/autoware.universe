@@ -328,11 +328,9 @@ void AutowareStatePanel::onClickEmergencyButton()
   using tier4_external_api_msgs::msg::ResponseStatus;
   using tier4_external_api_msgs::srv::SetEmergency;
 
-  auto request = std::make_shared<SetEmergency::Request>();
-  request->emergency = !current_external_emergency_;
-
-  RCLCPP_INFO(raw_node_->get_logger(), request->emergency ? "Set Emergency" : "Clear Emergency");
-  if(request->emergency){
+  if(!current_external_emergency_ && !current_emergency_state){
+    auto request = std::make_shared<SetEmergency::Request>();
+    request->emergency = !current_external_emergency_;
     client_emergency_stop_->async_send_request(
       request, [this](rclcpp::Client<SetEmergency>::SharedFuture result) {
         const auto & response = result.get();
@@ -343,34 +341,37 @@ void AutowareStatePanel::onClickEmergencyButton()
             raw_node_->get_logger(), "service failed: %s", response->status.message.c_str());
         }
       });
+  } else {
+    if(current_external_emergency_){
+      auto request = std::make_shared<SetEmergency::Request>();
+      request->emergency = !current_external_emergency_;
+      client_emergency_stop_->async_send_request(
+        request, [this](rclcpp::Client<SetEmergency>::SharedFuture result) {
+          const auto & response = result.get();
+          if (response->status.code == ResponseStatus::SUCCESS) {
+            RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
+          } else {
+            RCLCPP_WARN(
+              raw_node_->get_logger(), "service failed: %s", response->status.message.c_str());
+          }
+        });
+    }
+    if(current_emergency_state){
+      auto request_clear_system_emergency = std::make_shared<std_srvs::srv::Trigger::Request>();
+      client_clear_emergency_->async_send_request(request_clear_system_emergency, [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result){
+        const auto & response = result.get();
+        if (response->success) {
+          RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
+        } else {
+          RCLCPP_WARN(
+            raw_node_->get_logger(), "service failed: %s", response->message.c_str());
+        }
+      });
+    }
   }
 
+//  RCLCPP_INFO(raw_node_->get_logger(), request->emergency ? "Set Emergency" : "Clear Emergency");
 
-  if(current_external_emergency_){
-    auto request_clear_external_emergency = std::make_shared<std_srvs::srv::Trigger::Request>();
-    client_clear_external_emergency_->async_send_request(request_clear_external_emergency, [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result){
-      const auto & response = result.get();
-      if (response->success) {
-        RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
-      } else {
-        RCLCPP_WARN(
-          raw_node_->get_logger(), "service failed: %s", response->message.c_str());
-      }
-    });
-  }
-
-  if(current_emergency_state){
-    auto request_clear_system_emergency = std::make_shared<std_srvs::srv::Trigger::Request>();
-    client_clear_emergency_->async_send_request(request_clear_system_emergency, [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result){
-      const auto & response = result.get();
-      if (response->success) {
-        RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
-      } else {
-        RCLCPP_WARN(
-          raw_node_->get_logger(), "service failed: %s", response->message.c_str());
-      }
-    });
-  }
 }
 void AutowareStatePanel::onClickGateMode()
 {
