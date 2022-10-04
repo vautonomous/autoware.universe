@@ -76,6 +76,7 @@ struct Param
   double prediction_time_period;
   double prediction_time_length;
   double curvature_calculation_distance;
+  double max_ld;
 };
 
 struct pp_out

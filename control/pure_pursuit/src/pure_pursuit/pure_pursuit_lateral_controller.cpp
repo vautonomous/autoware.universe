@@ -137,6 +137,8 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
   param_.prediction_time_length = node_->declare_parameter<double>("prediction_time_length", 0.2);
   param_.curvature_calculation_distance =
     node_->declare_parameter<double>("curvature_calculation_distance", 2.0);
+  param_.max_ld =
+    node_->declare_parameter<double>("max_ld", 25.0);
 
   // Debug Publishers
   pub_debug_marker_ =
@@ -373,7 +375,7 @@ boost::optional<pp_out> PurePursuitLateralController::calcTargetCurvature(
       output_cmd.velocity, param_.lookahead_distance_ratio, min_lookahead_distance, lateral_error,
       param_.lateral_error_ratio, current_curvature, param_.curvature_ratio);
   }
-
+  lookahead_distance = std::min(param_.max_ld, lookahead_distance);
   // Set PurePursuit data
   pure_pursuit_->setCurrentPose(pose);
   pure_pursuit_->setWaypoints(planning_utils::extractPoses(output_traj));
