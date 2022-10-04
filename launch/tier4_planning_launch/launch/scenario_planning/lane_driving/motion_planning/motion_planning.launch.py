@@ -234,6 +234,7 @@ def launch_setup(context, *args, **kwargs):
         composable_node_descriptions=[
             obstacle_avoidance_planner_component,
         ],
+        # output="screen",
     )
 
     obstacle_stop_planner_loader = LoadComposableNodes(

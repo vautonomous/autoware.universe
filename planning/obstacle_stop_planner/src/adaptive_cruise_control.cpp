@@ -267,6 +267,9 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
   /*
    * insert max velocity
    */
+
+  std::cout << "col_point_distance: " << col_point_distance << std::endl;
+  std::cout << "upper_velocity (kph): " << upper_velocity * 3.6 << std::endl;
   insertMaxVelocityToPath(
     self_pose, current_velocity, upper_velocity, col_point_distance, output_trajectory);
   *need_to_stop = false;
@@ -617,7 +620,13 @@ void AdaptiveCruiseController::insertMaxVelocityToPath(
     const auto prev_p = output_trajectory->at(i - 1);
     const double p_dist = getDistanceFromTwoPoint(current_p.pose.position, prev_p.pose.position);
     total_dist += p_dist;
+
+    std::cout << "current_p.longitudinal_velocity_mps: " << current_p.longitudinal_velocity_mps * 3.6 << std::endl;
+    std::cout << "current_p.target_vel: " << target_vel * 3.6 << std::endl;
+    std::cout << "total_dist: " << total_dist << std::endl;
+
     if (current_p.longitudinal_velocity_mps > target_vel && total_dist >= 0) {
+      std::cout << "IN 11111111111111111111111111111111111111111111111111" << std::endl;
       double next_pre_vel;
       if (std::fabs(clipped_acc) < 1e-05) {
         next_pre_vel = pre_vel;
@@ -633,6 +642,7 @@ void AdaptiveCruiseController::insertMaxVelocityToPath(
 
       if (total_dist >= margin_to_insert) {
         const double max_velocity = std::max(target_vel, next_pre_vel);
+        std::cout << "INSERTED !!!!!!!" << max_velocity * 3.6 << " kph" << std::endl;
         if (output_trajectory->at(i).longitudinal_velocity_mps > max_velocity) {
           output_trajectory->at(i).longitudinal_velocity_mps = max_velocity;
         }

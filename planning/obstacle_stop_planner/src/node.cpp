@@ -794,6 +794,12 @@ void ObstacleStopPlannerNode::searchObstacle(
         const auto current_velocity_ptr = current_velocity_ptr_;
         mutex_.unlock();
 
+        for (size_t j = 0; j < output.size(); ++j) {
+          auto const & t_p = output.at(j).longitudinal_velocity_mps;
+          std::cout << "index: " << j << " || "
+                    << "speed (kph): " << t_p * 3.6 << std::endl;
+        }
+
         acc_controller_->insertAdaptiveCruiseVelocity(
           decimate_trajectory, planner_data.decimate_trajectory_collision_index,
           planner_data.current_pose, planner_data.nearest_collision_point,

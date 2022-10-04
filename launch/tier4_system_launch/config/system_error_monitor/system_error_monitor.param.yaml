@@ -24,8 +24,8 @@
         /autoware/control/autonomous_driving/performance_monitoring/trajectory_deviation: default
 
         /autoware/localization/node_alive_monitoring: default
-        /autoware/localization/performance_monitoring/matching_score: default
-        /autoware/localization/performance_monitoring/localization_accuracy: default
+        /autoware/localization/performance_monitoring/matching_score: { sf_at: "none", lf_at: "none", spf_at: "none" }
+        /autoware/localization/performance_monitoring/localization_accuracy: { sf_at: "none", lf_at: "none", spf_at: "none" }
 
         /autoware/map/node_alive_monitoring: default
 
