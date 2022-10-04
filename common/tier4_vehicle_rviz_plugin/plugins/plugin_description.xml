@@ -15,4 +15,8 @@
          type="rviz_plugins::VelocityHistoryDisplay"
          base_class_type="rviz_common::Display">
   </class>
+  <class name="rviz_plugins/Emergency"
+         type="rviz_plugins::EmergencyDisplay"
+         base_class_type="rviz_common::Display">
+  </class>
 </library>
