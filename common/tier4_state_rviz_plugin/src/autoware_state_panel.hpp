@@ -22,8 +22,10 @@
 #include <QSpinBox>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
+#include <std_srvs/srv/trigger.hpp>
 
 #include <autoware_auto_system_msgs/msg/autoware_state.hpp>
+#include <autoware_auto_system_msgs/msg/emergency_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
 #include <tier4_control_msgs/msg/external_command_selector_mode.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
@@ -59,6 +61,7 @@ protected:
   void onShift(const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg);
   void onEmergencyStatus(const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg);
   void onEngageStatus(const tier4_external_api_msgs::msg::EngageStatus::ConstSharedPtr msg);
+  void onEmergencyState(autoware_auto_system_msgs::msg::EmergencyState::ConstSharedPtr msg);
 
   rclcpp::Node::SharedPtr raw_node_;
   rclcpp::Subscription<tier4_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
@@ -68,9 +71,14 @@ protected:
     sub_autoware_state_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr sub_gear_;
   rclcpp::Subscription<tier4_external_api_msgs::msg::EngageStatus>::SharedPtr sub_engage_;
-
+  rclcpp::Subscription<autoware_auto_system_msgs::msg::EmergencyState>::SharedPtr
+    sub_emergency_state_;
   rclcpp::Client<tier4_external_api_msgs::srv::Engage>::SharedPtr client_engage_;
   rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedPtr client_emergency_stop_;
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client_clear_emergency_;
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client_clear_external_emergency_;
+
+
   rclcpp::Subscription<tier4_external_api_msgs::msg::Emergency>::SharedPtr sub_emergency_;
 
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
@@ -90,7 +98,8 @@ protected:
   QPushButton * emergency_button_ptr_;
 
   bool current_engage_{false};
-  bool current_emergency_{false};
+  bool current_external_emergency_{false};
+  bool current_emergency_state{false};
 };
 
 }  // namespace rviz_plugins
