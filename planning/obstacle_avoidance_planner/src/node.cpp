@@ -1249,9 +1249,9 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
   if (is_outside || is_outside_predicted) {
     size_t first_stop_idx = std::min(out_index, closest_out_index_predicted.get());
 
-    int stop_drivable_area_index = std::max(first_stop_idx - 4, static_cast<size_t>(0));
+    int stop_drivable_area_index = std::max(first_stop_idx - 8, static_cast<size_t>(0));
 
-    // only insert zero velocity to the point 4 index before the first point outside drivable area
+    // only insert zero velocity to the point x index before the first point outside drivable area
     traj_points[stop_drivable_area_index].longitudinal_velocity_mps = 0.0;
     debug_data_ptr_->stop_pose_by_drivable_area = traj_points[stop_drivable_area_index].pose;
   }
