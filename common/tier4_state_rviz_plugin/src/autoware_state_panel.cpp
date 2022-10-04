@@ -356,7 +356,6 @@ void AutowareStatePanel::onClickEmergencyButton()
           }
         });
     }
-    if(current_emergency_state){
       auto request_clear_system_emergency = std::make_shared<std_srvs::srv::Trigger::Request>();
       client_clear_emergency_->async_send_request(request_clear_system_emergency, [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result){
         const auto & response = result.get();
@@ -367,7 +366,6 @@ void AutowareStatePanel::onClickEmergencyButton()
             raw_node_->get_logger(), "service failed: %s", response->message.c_str());
         }
       });
-    }
   }
 
 //  RCLCPP_INFO(raw_node_->get_logger(), request->emergency ? "Set Emergency" : "Clear Emergency");
