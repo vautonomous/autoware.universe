@@ -60,10 +60,10 @@ struct PlannerData
   : vehicle_info_(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo())
   {
     max_stop_acceleration_threshold = node.declare_parameter(
-      "max_accel", -5.0);  // TODO(someone): read min_acc in velocity_controller.param.yaml?
-    max_stop_jerk_threshold = node.declare_parameter("max_jerk", -5.0);
+      "max_accel", -1.0);  // TODO(someone): read min_acc in velocity_controller.param.yaml?
+    max_stop_jerk_threshold = node.declare_parameter("max_jerk", -0.75);
     system_delay = node.declare_parameter("system_delay", 0.50);
-    delay_response_time = node.declare_parameter("delay_response_time", 0.50);
+    delay_response_time = node.declare_parameter("delay_response_time", 1.5);
   }
   // tf
   geometry_msgs::msg::PoseStamped current_pose;
