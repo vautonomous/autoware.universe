@@ -21,6 +21,19 @@
         /autoware/control/autonomous_driving/performance_monitoring/lane_departure: { sf_at: "none", lf_at: "none", spf_at: "none" }
         /autoware/control/control_command_gate/node_alive_monitoring: default
         /autoware/control/autonomous_driving/performance_monitoring/obstacle_collision_checker: { sf_at: "warn", lf_at: "error", spf_at: "error" }
+        /autoware/control/autonomous_driving/performance_monitoring/bbw_timeout: default
+        /autoware/control/autonomous_driving/performance_monitoring/epas_timeout: default
+        /autoware/control/autonomous_driving/performance_monitoring/pds_timeout: default
+        /autoware/control/autonomous_driving/performance_monitoring/bcu_timeout: default
+        /autoware/control/autonomous_driving/performance_monitoring/pc_timeout: default
+        /autoware/control/autonomous_driving/performance_monitoring/pds_system_error: default
+        /autoware/control/autonomous_driving/performance_monitoring/bbw_system_error: default
+        /autoware/control/autonomous_driving/performance_monitoring/epas_system_error: default
+        /autoware/control/autonomous_driving/performance_monitoring/pc_ignition_error: default
+        /autoware/control/autonomous_driving/performance_monitoring/epas_pwr_error: default
+        /autoware/control/autonomous_driving/performance_monitoring/sbw_pwr_error: default
+        /autoware/control/autonomous_driving/performance_monitoring/bbw_pwr_error: default
+
         /autoware/control/autonomous_driving/performance_monitoring/trajectory_deviation: default
         
         /autoware/localization/node_alive_monitoring: default

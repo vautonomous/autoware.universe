@@ -78,11 +78,11 @@
                   contains: [": trajectory_deviation"]
                   timeout: 1.0
 
-                obstacle_collision_checker:
-                  type: diagnostic_aggregator/GenericAnalyzer
-                  path: obstacle_collision_checker
-                  contains: [ ": obstacle_collision_checker" ]
-                  timeout: 1.0
+#                obstacle_collision_checker:
+#                  type: diagnostic_aggregator/GenericAnalyzer
+#                  path: obstacle_collision_checker
+#                  contains: [ ": obstacle_collision_checker" ]
+#                  timeout: 1.0
 
         external_control:
           type: diagnostic_aggregator/AnalyzerGroup
