@@ -42,6 +42,78 @@
                   contains: [": lane_departure"]
                   timeout: 1.0
 
+                bbw_timeout:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: bbw_timeout
+                  contains: [": bbw_timeout"]
+                  timeout: 1.0
+
+                epas_timeout:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: epas_timeout
+                  contains: [": epas_timeout"]
+                  timeout: 1.0
+
+                pds_timeout:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: pds_timeout
+                  contains: [": pds_timeout"]
+                  timeout: 1.0
+
+                bcu_timeout:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: bcu_timeout
+                  contains: [": bcu_timeout"]
+                  timeout: 1.0
+
+                pc_timeout:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: pc_timeout
+                  contains: [": pc_timeout"]
+                  timeout: 1.0
+
+                pds_system_error:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: pds_system_error
+                  contains: [": pds_system_error"]
+                  timeout: 1.0
+
+                bbw_system_error:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: bbw_system_error
+                  contains: [": bbw_system_error"]
+                  timeout: 1.0
+
+                epas_system_error:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: epas_system_error
+                  contains: [": epas_system_error"]
+                  timeout: 1.0
+
+                pc_ignition_error:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: pc_ignition_error
+                  contains: [": pc_ignition_error"]
+                  timeout: 1.0
+
+                epas_pwr_error:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: epas_pwr_error
+                  contains: [": epas_pwr_error"]
+                  timeout: 1.0
+
+                sbw_pwr_error:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: sbw_pwr_error
+                  contains: [": sbw_pwr_error"]
+                  timeout: 1.0
+
+                bbw_pwr_error:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: bbw_pwr_error
+                  contains: [": bbw_pwr_error"]
+                  timeout: 1.0
+
                 trajectory_deviation:
                   type: diagnostic_aggregator/GenericAnalyzer
                   path: trajectory_deviation

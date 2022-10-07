@@ -42,17 +42,47 @@
                   contains: [": lane_departure"]
                   timeout: 1.0
 
+                bbw_timeout:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: bbw_timeout
+                  contains: [": bbw_timeout"]
+                  timeout: 1.0
+
+                epas_timeout:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: epas_timeout
+                  contains: [": epas_timeout"]
+                  timeout: 1.0
+
+                pds_timeout:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: pds_timeout
+                  contains: [": pds_timeout"]
+                  timeout: 1.0
+
+                bcu_timeout:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: bcu_timeout
+                  contains: [": bcu_timeout"]
+                  timeout: 1.0
+
+                pc_timeout:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: pc_timeout
+                  contains: [": pc_timeout"]
+                  timeout: 1.0
+
                 trajectory_deviation:
                   type: diagnostic_aggregator/GenericAnalyzer
                   path: trajectory_deviation
                   contains: [": trajectory_deviation"]
                   timeout: 1.0
 
-                obstacle_collision_checker:
-                  type: diagnostic_aggregator/GenericAnalyzer
-                  path: obstacle_collision_checker
-                  contains: [ ": obstacle_collision_checker" ]
-                  timeout: 1.0
+#                obstacle_collision_checker:
+#                  type: diagnostic_aggregator/GenericAnalyzer
+#                  path: obstacle_collision_checker
+#                  contains: [ ": obstacle_collision_checker" ]
+#                  timeout: 1.0
 
         external_control:
           type: diagnostic_aggregator/AnalyzerGroup
