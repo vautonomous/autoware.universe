@@ -3,7 +3,7 @@
     hunting_threshold: 0.5                   # even if the obstacle disappears, the stop judgment continues for hunting_threshold [s]
     lowpass_gain: 0.9                        # gain parameter for low pass filter [-]
     max_velocity: 8.34                       # max velocity [m/s]
-    enable_slow_down: False                  # whether to use slow down planner [-]
+    enable_slow_down: True                  # whether to use slow down planner [-]
 
     stop_planner:
       # params for stop position
@@ -22,7 +22,7 @@
     slow_down_planner:
       # params for slow down section
       slow_down_section:
-        longitudinal_forward_margin: 10.0     # margin distance from slow down point to vehicle front [m]
+        longitudinal_forward_margin: 5.0     # margin distance from slow down point to vehicle front [m]
         longitudinal_backward_margin: 0.0    # margin distance from slow down point to vehicle rear [m]
         longitudinal_margin_span: -0.1       # fineness param for relaxing slow down margin (use this param if consider_constraints is True) [m/s]
         min_longitudinal_forward_margin: 1.0 # min margin for relaxing slow down margin (use this param if consider_constraints is True) [m/s]
@@ -35,15 +35,15 @@
       target_velocity:
         max_slow_down_velocity: 4.0         # max slow down velocity (use this param if consider_constraints is False)[m/s]
         min_slow_down_velocity: 2.2         # min slow down velocity (use this param if consider_constraints is False)[m/s]
-        slow_down_velocity: 1.38             # target slow down velocity (use this param if consider_constraints is True)[m/s]
+        slow_down_velocity: 2.5             # target slow down velocity (use this param if consider_constraints is True)[m/s]
 
       # params for deceleration constraints (use this param if consider_constraints is True)
       constraints:
-        jerk_min_slow_down: -0.6             # min slow down jerk constraint [m/sss]
+        jerk_min_slow_down: -2.0             # min slow down jerk constraint [m/sss]
         jerk_span: -0.01                     # fineness param for planning deceleration jerk [m/sss]
         jerk_start: -0.1                     # init jerk used for deceleration planning [m/sss]
 
       # others
-      consider_constraints: False                 # set "True", if no decel plan found under jerk/dec constrains, relax target slow down vel [-]
+      consider_constraints: True                 # set "True", if no decel plan found under jerk/dec constrains, relax target slow down vel [-]
       velocity_threshold_decel_complete: 0.2      # use for judge whether the ego velocity converges the target slow down velocity [m/s]
       acceleration_threshold_decel_complete: 0.1  # use for judge whether the ego velocity converges the target slow down velocity [m/ss]
