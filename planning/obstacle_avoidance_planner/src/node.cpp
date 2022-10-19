@@ -1224,6 +1224,7 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
         closest_out_index_predicted =
           motion_utils::findNearestIndex(traj_points, predicted_point.pose, 3.0);
         if (!closest_out_index_predicted) {
+          is_outside_predicted = false;
           closest_out_index_predicted = SIZE_MAX;
         }
         break;
@@ -1249,11 +1250,12 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
   if (is_outside || is_outside_predicted) {
     size_t first_stop_idx = std::min(out_index, closest_out_index_predicted.get());
 
-    int stop_drivable_area_index = std::max(first_stop_idx - 8, static_cast<size_t>(0));
+    int stop_drivable_area_index =
+      std::clamp(first_stop_idx - 8, static_cast<size_t>(0), traj_points.size() - 1);
 
     // only insert zero velocity to the point x index before the first point outside drivable area
-    traj_points[stop_drivable_area_index].longitudinal_velocity_mps = 0.0;
-    debug_data_ptr_->stop_pose_by_drivable_area = traj_points[stop_drivable_area_index].pose;
+    traj_points.at(stop_drivable_area_index).longitudinal_velocity_mps = 0.0;
+    debug_data_ptr_->stop_pose_by_drivable_area = traj_points.at(stop_drivable_area_index).pose;
   }
 
   debug_data_ptr_->msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__)
