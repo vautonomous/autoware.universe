@@ -39,8 +39,8 @@
 
       # params for deceleration constraints (use this param if consider_constraints is True)
       constraints:
-        jerk_min_slow_down: -2.0             # min slow down jerk constraint [m/sss]
-        jerk_span: -0.01                     # fineness param for planning deceleration jerk [m/sss]
+        jerk_min_slow_down: -1.0             # min slow down jerk constraint [m/sss]
+        jerk_span: -0.001                     # fineness param for planning deceleration jerk [m/sss]
         jerk_start: -0.1                     # init jerk used for deceleration planning [m/sss]
 
       # others
