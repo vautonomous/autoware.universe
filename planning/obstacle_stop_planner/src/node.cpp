@@ -1200,8 +1200,11 @@ void ObstacleStopPlannerNode::insertSlowDownSection(
   const SlowDownSection & slow_down_section, TrajectoryPoints & output)
 {
   const auto traj_end_idx = output.size() - 1;
-  const auto & start_idx = slow_down_section.slow_down_start_idx;
-  const auto & end_idx = slow_down_section.slow_down_end_idx;
+
+  const auto & start_idx =
+    std::clamp(slow_down_section.slow_down_start_idx, static_cast<size_t>(0), traj_end_idx);
+  const auto & end_idx =
+    std::clamp(slow_down_section.slow_down_end_idx, static_cast<size_t>(0), traj_end_idx);
 
   const auto p_base_start = output.at(start_idx);
   const auto p_next_start = output.at(std::min(start_idx + 1, traj_end_idx));
@@ -1254,6 +1257,7 @@ void ObstacleStopPlannerNode::insertSlowDownSection(
   }
 
   for (size_t i = update_start_idx; i <= update_end_idx; ++i) {
+    i = std::clamp(i, static_cast<size_t>(0), output.size() - 1);
     output.at(i).longitudinal_velocity_mps = std::min(
       slow_down_section.velocity, static_cast<double>(output.at(i).longitudinal_velocity_mps));
   }
