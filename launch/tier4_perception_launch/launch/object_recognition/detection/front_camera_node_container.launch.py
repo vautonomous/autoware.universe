@@ -156,6 +156,11 @@ def generate_launch_description():
                     "vertical_binning": camera_yaml_param['vertical_binning'],
                     "resize_image": camera_yaml_param['resize_image'],
                     "camera_info_url": camera_yaml_param['camera_info_url'],
+                    "exposure_auto": camera_yaml_param['exposure_auto'],
+                    "exposure_target": camera_yaml_param['exposure_target'],
+                    "gain_auto": camera_yaml_param['gain_auto'],
+                    "gain_target": camera_yaml_param['gain_target'],
+                    "gamma_target": camera_yaml_param['gamma_target'],
                 }],
                 remappings=[
                 ],
