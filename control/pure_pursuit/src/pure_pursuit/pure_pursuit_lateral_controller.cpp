@@ -202,9 +202,21 @@ boost::optional<LateralOutput> PurePursuitLateralController::run()
   if (!isDataReady()) {
     return boost::none;
   }
-  const auto num_of_iteration = std::max(
-    static_cast<int>(std::ceil(param_.prediction_time_length / param_.prediction_time_period)), 1);
+  const auto closest_idx_result = planning_utils::findClosestIdxWithDistAngThr(
+    planning_utils::extractPoses(*trajectory_), current_pose_->pose, 3.0, M_PI_4);
+  if(!closest_idx_result.first){
+    return boost::none;
+  }
+  const double remaining_distance = planning_utils::calcArcLengthFromWayPoint(
+    *trajectory_, closest_idx_result.second, trajectory_->points.size() - 1);
 
+//  const auto num_of_iteration = std::max(
+//    static_cast<int>(std::ceil(param_.prediction_time_length / param_.prediction_time_period)), 1);
+
+  const auto num_of_iteration = std::max(
+    static_cast<int>(std::ceil(
+      std::min(remaining_distance, param_.prediction_time_length) / param_.prediction_time_period)),
+    1);
   Trajectory predicted_trajectory;
   AckermannLateralCommand cmd_msg;
 
