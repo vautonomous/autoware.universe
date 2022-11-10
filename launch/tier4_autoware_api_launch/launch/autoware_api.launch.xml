@@ -6,6 +6,8 @@
   <!-- external api adaptor -->
   <arg name="launch_calibration_status_api" default="false"/>
   <arg name="launch_start_api" default="true"/>
+  <arg name="topics_glob" default="/parameter_events, /rosout, /clients_connected, /client_count, /map/vector_map_marker, /planning/mission_planning/route_marker,/planning/scenario_planning/lane_driving/behavior_planning/path, /planning/scenario_planning/trajectory,  /perception/object_recognition/detection/traffic_signals,/hmi/goal_gnss_coordinate,/hmi/checkpoint_gnss_coordinate, /ui/ui_process_command, /api/autoware/get/engage, /awapi/vehicle/put/velocity, /awapi/autoware/get/status, /api/autoware/get/emergency, /awapi/vehicle/get/status, /ui/ui_process_diagnostic, /autoware/state, /planning/scenario_planning/max_velocity_default, /tf, /tf_static, /planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/virtual_wall, /planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/debug/wall_marker, /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/virtual_wall/stop_line, /planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug/marker" />
+  <arg name="use_compression" default="true" />
 
   <!-- AD API -->
   <group if="$(var launch_default_ad_api)">
@@ -40,6 +42,8 @@
   <group>
     <include file="$(find-pkg-share rosbridge_server)/launch/rosbridge_websocket_launch.xml">
       <arg name="respawn" value="$(var respawn_rosbridge)"/>
+      <arg name="topics_glob" value="$(var topics_glob)"/>
+      <arg name="use_compression" value="$(var use_compression)"/>
     </include>
   </group>
 </launch>
