@@ -123,8 +123,8 @@ GNSSStat NavSatFix2LocalCartesianUTM(
     utm_local.longitude = nav_sat_fix_msg.longitude;
     utm_local.altitude = nav_sat_fix_msg.altitude;
     // individual coordinates of local coordinate system
-    utm_local.x = global_x - utm_origin.x;
-    utm_local.y = global_y - utm_origin.y;
+    utm_local.x = global_x - utm_origin.x - 0.50;
+    utm_local.y = global_y - utm_origin.y - 0.24;
     utm_local.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger) - utm_origin.z;
   } catch (const GeographicLib::GeographicErr & err) {
     RCLCPP_ERROR_STREAM(
