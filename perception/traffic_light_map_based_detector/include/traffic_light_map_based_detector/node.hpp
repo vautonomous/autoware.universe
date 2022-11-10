@@ -102,6 +102,13 @@ private:
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
   Config config_;
 
+  double tl_offset_x_;
+  double tl_offset_y_;
+  double tl_offset_z_;
+  double tl_offset_r_deg_;
+  double tl_offset_p_deg_;
+  double tl_offset_y_deg_;
+
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr input_msg);
   void cameraInfoCallback(const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_msg);
   void routeCallback(const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr input_msg);

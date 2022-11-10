@@ -64,7 +64,8 @@ cv::Point2d calcRawImagePointFromPoint3D(
   const image_geometry::PinholeCameraModel & pinhole_camera_model, const cv::Point3d & point3d)
 {
   cv::Point2d rectified_image_point = pinhole_camera_model.project3dToPixel(point3d);
-  return pinhole_camera_model.unrectifyPoint(rectified_image_point);
+//  return pinhole_camera_model.unrectifyPoint(rectified_image_point);
+  return rectified_image_point;
 }
 
 cv::Point2d calcRawImagePointFromPoint3D(
@@ -117,6 +118,13 @@ MapBasedDetector::MapBasedDetector(const rclcpp::NodeOptions & node_options)
   config_.max_vibration_height = declare_parameter<double>("max_vibration_height", 0.0);
   config_.max_vibration_width = declare_parameter<double>("max_vibration_width", 0.0);
   config_.max_vibration_depth = declare_parameter<double>("max_vibration_depth", 0.0);
+
+  tl_offset_x_ = declare_parameter<double>("tl_offset_x", 0.0);
+  tl_offset_y_ = declare_parameter<double>("tl_offset_y", 0.0);
+  tl_offset_z_ = declare_parameter<double>("tl_offset_z", 0.0);
+  tl_offset_r_deg_ = declare_parameter<double>("tl_offset_r_deg", 0.0) / 180.0 * M_PI;
+  tl_offset_p_deg_ = declare_parameter<double>("tl_offset_p_deg", 0.0) / 180.0 * M_PI;
+  tl_offset_y_deg_ = declare_parameter<double>("tl_offset_y_deg", 0.0) / 180.0 * M_PI;
 }
 
 void MapBasedDetector::cameraInfoCallback(
@@ -201,14 +209,27 @@ bool MapBasedDetector::getTrafficLightRoi(
   // id
   tl_roi.id = traffic_light.id();
 
+  tf2::Quaternion quat_offset;
+  quat_offset.setRPY(tl_offset_r_deg_, tl_offset_p_deg_, tl_offset_y_deg_);
+
+  tf2::Transform tf_offset(quat_offset, tf2::Vector3(tl_offset_x_, tl_offset_y_, tl_offset_z_));
   // for roi.x_offset and roi.y_offset
+
+//  double dist_to_tl_approx = 0.0;
+//  double width_multiplier = 1.0;
+
   {
     tf2::Transform tf_map2tl(
       tf2::Quaternion(0, 0, 0, 1),
       tf2::Vector3(
         tl_left_down_point.x(), tl_left_down_point.y(), tl_left_down_point.z() + tl_height));
+
     tf2::Transform tf_camera2tl;
-    tf_camera2tl = tf_map2camera.inverse() * tf_map2tl;
+    tf_camera2tl = tf_map2camera.inverse() * tf_offset * tf_map2tl;
+//    dist_to_tl_approx = tf_camera2tl.getOrigin().length();
+//    dist_to_tl_approx = std::clamp(0.1,dist_to_tl_approx);
+//    width_multiplier = 1/dist_to_tl_approx;
+
     // max vibration
     const double max_vibration_x =
       std::sin(config.max_vibration_yaw * 0.5) * tf_camera2tl.getOrigin().z() +
@@ -237,7 +258,7 @@ bool MapBasedDetector::getTrafficLightRoi(
       tf2::Quaternion(0, 0, 0, 1),
       tf2::Vector3(tl_right_down_point.x(), tl_right_down_point.y(), tl_right_down_point.z()));
     tf2::Transform tf_camera2tl;
-    tf_camera2tl = tf_map2camera.inverse() * tf_map2tl;
+    tf_camera2tl = tf_map2camera.inverse() * tf_offset * tf_map2tl;
     // max vibration
     const double max_vibration_x =
       std::sin(config.max_vibration_yaw * 0.5) * tf_camera2tl.getOrigin().z() +

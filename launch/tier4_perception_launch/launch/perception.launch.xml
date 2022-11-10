@@ -128,7 +128,7 @@
 
     <!-- traffic light module -->
     <group>
-      <push-ros-namespace namespace="traffic_light_recognition"/>
+      <push-ros-namespace namespace="object_recognition/detection"/>
       <include file="$(find-pkg-share tier4_perception_launch)/launch/traffic_light_recognition/traffic_light.launch.xml"/>
     </group>
   </group>
