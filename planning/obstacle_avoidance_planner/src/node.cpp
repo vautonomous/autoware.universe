@@ -1358,7 +1358,7 @@ ObstacleAvoidancePlanner::getExtendedTrajectory(
 
   auto extended_traj_points =
     [&]() -> std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> {
-    constexpr double non_fixed_traj_length = 5.0;  // TODO(murooka) may be better to tune
+    constexpr double non_fixed_traj_length = 15.0;  // TODO(murooka) may be better to tune
     const size_t non_fixed_begin_path_idx = opt_end_path_idx.get();
     const size_t non_fixed_end_path_idx =
       points_utils::findForwardIndex(path_points, non_fixed_begin_path_idx, non_fixed_traj_length);
