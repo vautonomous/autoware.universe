@@ -24,6 +24,8 @@
 #include <utility>
 #include <vector>
 
+#include <cuda_runtime.h>
+
 namespace
 {
 std::vector<std::string> getFilePath(const std::string & input_dir)
@@ -51,7 +53,7 @@ TensorrtYoloNodelet::TensorrtYoloNodelet(const rclcpp::NodeOptions & options)
   std::string calib_image_directory = declare_parameter("calib_image_directory", "");
   std::string calib_cache_file = declare_parameter("calib_cache_file", "");
   std::string mode = declare_parameter("mode", "FP32");
-  int gpu_device_id = declare_parameter("gpu_id", 0);
+  gpu_id_ = declare_parameter("gpu_id", 0);
   yolo_config_.num_anchors = declare_parameter("num_anchors", 3);
   auto anchors = declare_parameter(
     "anchors", std::vector<double>{
@@ -67,7 +69,7 @@ TensorrtYoloNodelet::TensorrtYoloNodelet(const rclcpp::NodeOptions & options)
   yolo_config_.use_darknet_layer = declare_parameter("use_darknet_layer", true);
   yolo_config_.ignore_thresh = declare_parameter("ignore_thresh", 0.5);
 
-  if (!yolo::set_cuda_device(gpu_device_id)) {
+  if (!yolo::set_cuda_device(gpu_id_)) {
     RCLCPP_ERROR(this->get_logger(), "Given GPU not exist or suitable");
   }
 
@@ -98,8 +100,10 @@ TensorrtYoloNodelet::TensorrtYoloNodelet(const rclcpp::NodeOptions & options)
   RCLCPP_INFO(this->get_logger(), "Inference engine prepared.");
 
   using std::chrono_literals::operator""ms;
-  timer_ = rclcpp::create_timer(
-    this, get_clock(), 100ms, std::bind(&TensorrtYoloNodelet::connectCb, this));
+
+  image_sub_ = image_transport::create_subscription(
+          this, "in/image", std::bind(&TensorrtYoloNodelet::callback, this, _1), "raw",
+          rmw_qos_profile_sensor_data);
 
   std::lock_guard<std::mutex> lock(connect_mutex_);
 
@@ -115,21 +119,14 @@ TensorrtYoloNodelet::TensorrtYoloNodelet(const rclcpp::NodeOptions & options)
     std::make_unique<float[]>(net_ptr_->getMaxBatchSize() * net_ptr_->getMaxDetections());
 }
 
-void TensorrtYoloNodelet::connectCb()
-{
-  using std::placeholders::_1;
-  std::lock_guard<std::mutex> lock(connect_mutex_);
-  if (objects_pub_->get_subscription_count() == 0 && image_pub_.getNumSubscribers() == 0) {
-    image_sub_.shutdown();
-  } else if (!image_sub_) {
-    image_sub_ = image_transport::create_subscription(
-      this, "in/image", std::bind(&TensorrtYoloNodelet::callback, this, _1), "raw",
-      rmw_qos_profile_sensor_data);
-  }
-}
+
 
 void TensorrtYoloNodelet::callback(const sensor_msgs::msg::Image::ConstSharedPtr in_image_msg)
 {
+  if (!yolo::set_cuda_device(gpu_id_)) {
+    RCLCPP_ERROR(this->get_logger(), "Given GPU not exist or suitable - callback ");
+  }
+
   using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
   tier4_perception_msgs::msg::DetectedObjectsWithFeature out_objects;
