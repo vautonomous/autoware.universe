@@ -159,6 +159,11 @@ struct AvoidanceParameters
   // debug
   bool publish_debug_marker = false;
   bool print_debug_info = false;
+
+  // static expansion of drivable_area
+  bool static_expand_drivable_area{false};
+  double static_right_expand_bound_offset;
+  double static_left_expand_bound_offset;
 };
 
 struct ObjectData  // avoidance target

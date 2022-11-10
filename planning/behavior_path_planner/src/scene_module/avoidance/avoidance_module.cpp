@@ -2043,6 +2043,14 @@ BehaviorModuleOutput AvoidanceModule::plan()
     avoidance_path.path =
       util::resamplePathWithSpline(avoidance_path.path, parameters_->resample_interval_for_output);
   }
+
+  if (parameters_->static_expand_drivable_area) {
+    // Static expansion of drivable_area
+    expandDrivableArea(
+      avoidance_path.path, parameters_->static_right_expand_bound_offset,
+      parameters_->static_left_expand_bound_offset);
+  }
+
   output.path = std::make_shared<PathWithLaneId>(avoidance_path.path);
 
   const size_t ego_idx = findEgoIndex(output.path->points);
@@ -2646,6 +2654,44 @@ void AvoidanceModule::updateAvoidanceDebugData(
         debug_avoidance_initializer_for_shift_point_.end());
     }
   }
+}
+
+bool AvoidanceModule::expandDrivableArea(
+  PathWithLaneId & path_with_lane_id, const double & right_bound_offset,
+  const double & left_bound_offset)
+{
+  const auto current_pose = planner_data_->self_pose->pose;
+
+  lanelet::ConstLanelet current_lane;
+  if (!planner_data_->route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
+    RCLCPP_ERROR_THROTTLE(
+      getLogger(), *clock_, 5000, "failed to find closest lanelet within route!!!");
+    return false;
+  }
+
+  // For current_lanes with desired length
+  lanelet::ConstLanelets current_lanes = planner_data_->route_handler->getLaneletSequence(
+    current_lane, current_pose, planner_data_->parameters.backward_path_length,
+    planner_data_->parameters.forward_path_length);
+
+  lanelet::ConstLanelets expand_lanes{};
+  for (const auto & lane : current_lanes) {
+    const std::string r_type = lane.rightBound().attributeOr(lanelet::AttributeName::Type, "none");
+    const std::string l_type = lane.leftBound().attributeOr(lanelet::AttributeName::Type, "none");
+
+    const double r_offset = r_type.compare("road_border") != 0 ? -right_bound_offset : 0.0;
+    const double l_offset = l_type.compare("road_border") != 0 ? left_bound_offset : 0.0;
+
+    expand_lanes.push_back(lanelet::utils::getExpandedLanelet(lane, l_offset, r_offset));
+  }
+
+  current_lanes = expand_lanes;
+
+  path_with_lane_id.drivable_area = util::generateDrivableArea(
+    path_with_lane_id, current_lanes, planner_data_->parameters.drivable_area_resolution,
+    planner_data_->parameters.vehicle_length, planner_data_);
+
+  return true;
 }
 
 }  // namespace behavior_path_planner
