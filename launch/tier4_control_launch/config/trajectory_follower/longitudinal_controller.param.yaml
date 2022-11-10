@@ -1,6 +1,7 @@
 /**:
   ros__parameters:
-    delay_compensation_time: 0.17
+    longitudinal_ctrl_period: 0.03  # control period [s]
+    delay_compensation_time: 0.65  # delay compensation time [s]
 
     enable_smooth_stop: true
     enable_overshoot_emergency: true
