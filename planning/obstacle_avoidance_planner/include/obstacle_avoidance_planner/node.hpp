@@ -160,6 +160,7 @@ private:
   bool enable_pre_smoothing_;
   bool skip_optimization_;
   bool reset_prev_optimization_;
+  bool use_predicted_trajectory_;
 
   // vehicle circles info for for mpt constraints
   std::string vehicle_circle_method_;
@@ -195,6 +196,7 @@ private:
   std::unique_ptr<Trajectories> prev_optimal_trajs_ptr_;
   std::unique_ptr<std::vector<autoware_auto_planning_msgs::msg::PathPoint>> prev_path_points_ptr_;
   std::unique_ptr<autoware_auto_perception_msgs::msg::PredictedObjects> objects_ptr_;
+  std::unique_ptr<autoware_auto_planning_msgs::msg::Trajectory> predicted_traj_;
 
   std::unique_ptr<rclcpp::Time> latest_replanned_time_ptr_;
   tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
@@ -224,6 +226,7 @@ private:
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr
     objects_sub_;
   rclcpp::Subscription<tier4_planning_msgs::msg::EnableAvoidance>::SharedPtr is_avoidance_sub_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr predicted_traj_sub_;
 
   // param callback function
   rcl_interfaces::msg::SetParametersResult paramCallback(
@@ -234,6 +237,7 @@ private:
   void objectsCallback(const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr);
   void enableAvoidanceCallback(const tier4_planning_msgs::msg::EnableAvoidance::SharedPtr);
   void pathCallback(const autoware_auto_planning_msgs::msg::Path::SharedPtr);
+  void predictedTrajectoryCallback(const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr);
 
   // functions
   void resetPlanning();
