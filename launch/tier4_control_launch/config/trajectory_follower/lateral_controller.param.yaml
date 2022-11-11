@@ -60,6 +60,16 @@
     keep_steer_control_until_converged: true
     new_traj_duration_time: 1.0
     new_traj_end_dist: 0.3
+    lookahead_distance_ratio: 2.4
+    min_lookahead_distance: 4.35
+    reverse_min_lookahead_distance: 7.0
+    lateral_error_ratio: 3.6
+    sampling_ds: 0.5
+    curvature_ratio: 120.0
+    curvature_calculation_distance: 4.0
+    max_ld: 15.0
+    prediction_time_period: 1.0
+    prediction_time_length: 23.0
 
     # vehicle parameters
     vehicle:

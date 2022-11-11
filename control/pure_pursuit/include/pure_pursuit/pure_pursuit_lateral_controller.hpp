@@ -30,6 +30,7 @@
 #ifndef PURE_PURSUIT__PURE_PURSUIT_LATERAL_CONTROLLER_HPP_
 #define PURE_PURSUIT__PURE_PURSUIT_LATERAL_CONTROLLER_HPP_
 
+#include "motion_common/motion_common.hpp"
 #include "pure_pursuit/pure_pursuit.hpp"
 #include "pure_pursuit/pure_pursuit_viz.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -53,6 +54,8 @@ using autoware::motion::control::trajectory_follower::InputData;
 using autoware::motion::control::trajectory_follower::LateralControllerBase;
 using autoware::motion::control::trajectory_follower::LateralOutput;
 using autoware_auto_control_msgs::msg::AckermannLateralCommand;
+using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 
 namespace pure_pursuit
 {
@@ -67,6 +70,19 @@ struct Param
   double min_lookahead_distance;
   double reverse_min_lookahead_distance;  // min_lookahead_distance in reverse gear
   double converged_steer_rad_;
+  double lateral_error_ratio;
+  double sampling_ds;
+  double curvature_ratio;
+  double prediction_time_period;
+  double prediction_time_length;
+  double curvature_calculation_distance;
+  double max_ld;
+};
+
+struct pp_out
+{
+  double curvature;
+  double velocity;
 };
 
 struct DebugData
@@ -86,7 +102,7 @@ private:
   autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr trajectory_;
   nav_msgs::msg::Odometry::ConstSharedPtr current_odometry_;
   autoware_auto_vehicle_msgs::msg::SteeringReport::ConstSharedPtr current_steering_;
-
+  boost::optional<AckermannLateralCommand> prev_cmd;
   bool isDataReady();
 
   void onTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
@@ -99,6 +115,7 @@ private:
 
   // Debug Publisher
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_marker_;
+  rclcpp::Publisher<Trajectory>::SharedPtr pub_predicted_trajectory_;
 
   void publishDebugMarker() const;
 
@@ -119,8 +136,11 @@ private:
   // Algorithm
   std::unique_ptr<PurePursuit> pure_pursuit_;
 
-  boost::optional<double> calcTargetCurvature();
+  boost::optional<pp_out> calcTargetCurvature(
+    bool is_control_output, geometry_msgs::msg::Pose pose);
   boost::optional<autoware_auto_planning_msgs::msg::TrajectoryPoint> calcTargetPoint() const;
+  TrajectoryPoint calcNextPose(
+    const double dt, TrajectoryPoint & point, AckermannLateralCommand cmd);
 
   // Debug
   mutable DebugData debug_data_;
