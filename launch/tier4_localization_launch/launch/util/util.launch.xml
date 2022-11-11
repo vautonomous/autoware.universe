@@ -5,7 +5,7 @@
   <arg name="tier4_localization_launch_param_path" description="tier4_localization_launch param path"/>
   <arg name="output/pointcloud" default="downsample/pointcloud" description="final output topic name"/>
   <!-- container -->
-  <arg name="container" default="/sensing/lidar/top/pointcloud_preprocessor/velodyne_node_container" description="container name"/>
+  <arg name="container" default="/pointcloud_container" description="container name"/>
 
   <!-- option -->
   <arg name="use_intra_process" default="true" description="use ROS2 component container communication"/>

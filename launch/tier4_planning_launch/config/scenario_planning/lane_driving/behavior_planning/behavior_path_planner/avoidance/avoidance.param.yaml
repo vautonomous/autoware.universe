@@ -4,33 +4,33 @@
     avoidance:
       resample_interval_for_planning: 0.3
       resample_interval_for_output: 4.0
-      detection_area_right_expand_dist: 0.0
+      detection_area_right_expand_dist: 1.0
       detection_area_left_expand_dist: 1.0
 
-      enable_avoidance_over_same_direction: true
-      enable_avoidance_over_opposite_direction: true
+      enable_avoidance_over_same_direction: false
+      enable_avoidance_over_opposite_direction: false
 
       threshold_distance_object_is_on_center: 1.0 # [m]
-      threshold_speed_object_is_stopped: 1.0      # [m/s]
-      object_check_forward_distance: 150.0        # [m]
+      threshold_speed_object_is_stopped: 0.5      # [m/s]
+      object_check_forward_distance: 50.0        # [m]
       object_check_backward_distance: 2.0         # [m]
-      lateral_collision_margin: 1.0               # [m]
-      lateral_collision_safety_buffer: 0.7        # [m]
+      lateral_collision_margin: 0.5               # [m]
+      lateral_collision_safety_buffer: 1.0        # [m]
 
       prepare_time: 2.0                           # [s]
       min_prepare_distance: 1.0                   # [m]
       min_avoidance_distance: 10.0                # [m]
 
-      min_nominal_avoidance_speed: 7.0  # [m/s]
+      min_nominal_avoidance_speed: 1.5  # [m/s]
       min_sharp_avoidance_speed: 1.0    # [m/s]
 
-      road_shoulder_safety_margin: 0.5 # [m]
+      road_shoulder_safety_margin: 0.01 # [m]
 
-      max_right_shift_length: 5.0
-      max_left_shift_length: 5.0
+      max_right_shift_length: 2.0 # [m]
+      max_left_shift_length: 2.0 # [m]
 
-      nominal_lateral_jerk: 0.2   # [m/s3]
-      max_lateral_jerk: 1.0       # [m/s3]
+      nominal_lateral_jerk: 0.1   # [m/s3]
+      max_lateral_jerk: 0.4       # [m/s3]
 
       object_hold_max_count: 20
 
@@ -39,7 +39,7 @@
       max_avoidance_acceleration: 0.5  # [m/ss]
 
       # for debug
-      publish_debug_marker: false
+      publish_debug_marker: true
       print_debug_info: false
 
       # not enabled yet
@@ -52,7 +52,7 @@
         truck: true
         bus: true
         trailer: true
-        unknown: false
+        unknown: true
         bicycle: false
         motorcycle: false
         pedestrian: false

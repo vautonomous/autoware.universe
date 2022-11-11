@@ -340,7 +340,7 @@ def launch_setup(context, *args, **kwargs):
             ),
             (
                 "~/input/traffic_signals",
-                "/perception/traffic_light_recognition/traffic_signals",
+                "/perception/object_recognition/detection/traffic_signals",
             ),
             (
                 "~/input/external_traffic_signals",

@@ -49,7 +49,7 @@ def generate_launch_description():
         "label_file", os.path.join(ssd_fine_detector_share_dir, "data", "voc_labels_tl.txt")
     )
     add_launch_arg("fine_detector_precision", "FP32")
-    add_launch_arg("score_thresh", "0.7")
+    add_launch_arg("score_thresh", "0.3")
     add_launch_arg("max_batch_size", "8")
     add_launch_arg("approximate_sync", "False")
     add_launch_arg("mean", "[0.5, 0.5, 0.5]")
