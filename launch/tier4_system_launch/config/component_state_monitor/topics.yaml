@@ -98,9 +98,9 @@
     topic_type: autoware_auto_planning_msgs/msg/Trajectory
     best_effort: false
     transient_local: false
-    warn_rate: 5.0
-    error_rate: 1.0
-    timeout: 1.0
+    warn_rate: 1.5
+    error_rate: 0.8
+    timeout: 1.5
 
 - module: control
   mode: [online, planning_simulation]
@@ -176,6 +176,58 @@
     frame_id: map
     child_frame_id: base_link
     best_effort: false
+    transient_local: false
+    warn_rate: 5.0
+    error_rate: 1.0
+    timeout: 1.0
+
+- module: sensing
+  mode: [online]
+  type: autonomous
+  args:
+    node_name_suffix: applanix_twist
+    topic: /applanix/lvx_client/twist_with_covariance
+    topic_type: geometry_msgs/msg/TwistWithCovarianceStamped
+    best_effort: true
+    transient_local: false
+    warn_rate: 5.0
+    error_rate: 1.0
+    timeout: 1.0
+
+- module: sensing
+  mode: [online]
+  type: autonomous
+  args:
+    node_name_suffix: lidar_front
+    topic: /sensing/lidar/front/pointcloud_raw_ex
+    topic_type: sensor_msgs/msg/PointCloud2
+    best_effort: true
+    transient_local: false
+    warn_rate: 5.0
+    error_rate: 1.0
+    timeout: 1.0
+
+- module: sensing
+  mode: [online]
+  type: autonomous
+  args:
+    node_name_suffix: lidar_left
+    topic: /sensing/lidar/left/pointcloud_raw_ex
+    topic_type: sensor_msgs/msg/PointCloud2
+    best_effort: true
+    transient_local: false
+    warn_rate: 5.0
+    error_rate: 1.0
+    timeout: 1.0
+
+- module: sensing
+  mode: [online]
+  type: autonomous
+  args:
+    node_name_suffix: lidar_right
+    topic: /sensing/lidar/right/pointcloud_raw_ex
+    topic_type: sensor_msgs/msg/PointCloud2
+    best_effort: true
     transient_local: false
     warn_rate: 5.0
     error_rate: 1.0
