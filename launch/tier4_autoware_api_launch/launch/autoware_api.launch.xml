@@ -1,11 +1,11 @@
 <launch>
   <arg name="respawn_rosbridge" default="true"/>
   <arg name="launch_path_distance_calculator" default="false"/>
-  <arg name="launch_default_ad_api" default="true"/>
+  <arg name="launch_default_ad_api" default="false"/>
   <arg name="launch_rviz_adaptors" default="true"/>
   <!-- external api adaptor -->
   <arg name="launch_calibration_status_api" default="false"/>
-  <arg name="launch_start_api" default="true"/>
+  <arg name="launch_start_api" default="false"/>
 
   <!-- AD API -->
   <group>
