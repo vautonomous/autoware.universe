@@ -8,6 +8,7 @@
   <arg name="hazard_recovery_timeout" default="5.0"/>
   <arg name="use_emergency_hold" default="false"/>
   <arg name="use_emergency_hold_in_manual_driving" default="false"/>
+  <arg name="emergency_hazard_level" default="2"/>
 
   <arg name="agg_config_file_control" default="$(find-pkg-share system_error_monitor)/config/diagnostic_aggregator/control.param.yaml"/>
   <arg name="agg_config_file_localization" default="$(find-pkg-share system_error_monitor)/config/diagnostic_aggregator/localization.param.yaml"/>
@@ -51,5 +52,6 @@
     <arg name="hazard_recovery_timeout" value="$(var hazard_recovery_timeout)"/>
     <arg name="use_emergency_hold" value="$(var use_emergency_hold)"/>
     <arg name="use_emergency_hold_in_manual_driving" value="$(var use_emergency_hold_in_manual_driving)"/>
+    <arg name="emergency_hazard_level" value="$(var emergency_hazard_level)"/>
   </include>
 </launch>
