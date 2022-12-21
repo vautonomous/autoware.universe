@@ -28,6 +28,7 @@
 #include <boost/optional.hpp>
 
 #include <deque>
+#include <fstream>
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -62,6 +63,7 @@ class AutowareErrorMonitor : public rclcpp::Node
 {
 public:
   AutowareErrorMonitor();
+  ~AutowareErrorMonitor();
 
 private:
   // Parameter
@@ -77,6 +79,8 @@ private:
     int emergency_hazard_level;
     bool use_emergency_hold;
     bool use_emergency_hold_in_manual_driving;
+    bool use_log_file;
+    std::string log_file_location;
   };
 
   Parameters params_{};
@@ -143,6 +147,11 @@ private:
   void updateHazardStatus();
   bool canAutoRecovery() const;
   bool isEmergencyHoldingRequired() const;
+
+  void logHazardStatus(const autoware_auto_system_msgs::msg::HazardStatus & hazard_status);
+
+  // Data logger
+  std::unique_ptr<std::ofstream> logger_;
 };
 
 #endif  // SYSTEM_ERROR_MONITOR__SYSTEM_ERROR_MONITOR_CORE_HPP_
