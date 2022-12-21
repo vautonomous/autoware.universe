@@ -41,7 +41,6 @@ def generate_launch_description():
 
     #tensorrt yolo params
     input_image = "/lucid_vision/camera_2/image"
-    input_image = "/lucid_vision/camera_2/image"
     input_camera_info= "/lucid_vision/camera_2/camera_info"
 
     yolo_type = "yolov3"

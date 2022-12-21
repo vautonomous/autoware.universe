@@ -32,9 +32,6 @@ from launch import LaunchContext
 
 import yaml
 
-
-
-
 def generate_launch_description():
 
     context = LaunchContext()
@@ -72,7 +69,7 @@ def generate_launch_description():
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=[
             ComposableNode(
-                package="arena_camera",
+                package="lucid_vision_driver",
                 plugin="ArenaCameraNode",
                 name="right_arena_camera_node",
                 parameters=[{
@@ -132,7 +129,6 @@ def generate_launch_description():
                         "detections_per_im": tensorrt_yaml_param['detections_per_im'],
                         "use_darknet_layer": tensorrt_yaml_param['use_darknet_layer'],
                         "ignore_thresh": tensorrt_yaml_param['ignore_thresh'],
-
                     }
                 ],
                 remappings=[
