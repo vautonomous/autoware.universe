@@ -229,6 +229,10 @@ AutowareErrorMonitor::AutowareErrorMonitor()
   get_parameter_or<bool>("use_emergency_hold", params_.use_emergency_hold, false);
   get_parameter_or<bool>(
     "use_emergency_hold_in_manual_driving", params_.use_emergency_hold_in_manual_driving, false);
+  get_parameter_or<bool>(
+    "use_file_log", params_.use_log_file, true);
+  get_parameter_or<std::string>(
+    "log_file_location", params_.log_file_location, "/media/data/vehicle_logs/");
 
   loadRequiredModules(KeyName::autonomous_driving);
   loadRequiredModules(KeyName::external_control);
@@ -270,6 +274,21 @@ AutowareErrorMonitor::AutowareErrorMonitor()
   const auto period_ns = rclcpp::Rate(params_.update_rate).period();
   timer_ = rclcpp::create_timer(
     this, get_clock(), period_ns, std::bind(&AutowareErrorMonitor::onTimer, this));
+
+  if (params_.use_log_file){
+
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+
+    std::ostringstream current_time;
+    current_time << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
+    auto current_time_str = current_time.str();
+
+    std::string log_file_path =  params_.log_file_location + current_time_str;
+
+    logger_ = std::make_unique<std::ofstream>(log_file_path);
+  }
+
 }
 
 void AutowareErrorMonitor::loadRequiredModules(const std::string & key)
@@ -680,6 +699,10 @@ void AutowareErrorMonitor::publishHazardStatus(
   pub_hazard_status_->publish(hazard_status_stamped);
   pub_diagnostics_err_->publish(
     convertHazardStatusToDiagnosticArray(this->get_clock(), hazard_status_stamped.status));
+
+  if(params_.use_log_file){
+    this->logHazardStatus(hazard_status_stamped.status);
+  }
 }
 
 bool AutowareErrorMonitor::onClearEmergencyService(
@@ -692,4 +715,31 @@ bool AutowareErrorMonitor::onClearEmergencyService(
   response->message = "Emergency Holding state was cleared.";
 
   return true;
+}
+
+void AutowareErrorMonitor::logHazardStatus(const autoware_auto_system_msgs::msg::HazardStatus & hazard_status) {
+
+  auto t = std::time(nullptr);
+  auto tm = *std::localtime(&t);
+
+  std::ostringstream current_time;
+  current_time << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
+  auto current_time_str = current_time.str();
+
+  for (const auto & hazard_diag : hazard_status.diag_latent_fault) {
+    const std::string logger_name = " Diagnostic name: " + hazard_diag.name;
+
+    std::string log_message = current_time_str + logger_name +  " [Latent Fault]: " + hazard_diag.message;
+    *logger_ << log_message << std::endl;
+  }
+
+  for (const auto & hazard_diag : hazard_status.diag_single_point_fault) {
+    const std::string logger_name = " Diagnostic name: " + hazard_diag.name;
+    std::string log_message = current_time_str + logger_name +  " [Single Point Fault]: " + hazard_diag.message;
+    *logger_ << log_message << std::endl;
+  }
+}
+
+AutowareErrorMonitor::~AutowareErrorMonitor(){
+  logger_->close();
 }
