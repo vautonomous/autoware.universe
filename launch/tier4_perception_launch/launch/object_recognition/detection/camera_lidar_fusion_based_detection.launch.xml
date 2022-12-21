@@ -32,18 +32,6 @@
   <arg name="centerpoint_model_path" default="$(find-pkg-share lidar_centerpoint)/data"/>
   <arg name="centerpoint_model_param_path" default="$(find-pkg-share lidar_centerpoint)/config/$(var centerpoint_model_name).param.yaml"/>
 
-  <!-- Jetson AGX -->
-  <!-- <include file="$(find-pkg-share tensorrt_yolo)/launch/yolo.launch.xml">
-    <arg name="image_raw0" value="$(var image_raw0)"/>
-    <arg name="image_raw1" value="$(var image_raw1)"/>
-    <arg name="image_raw2" value="$(var image_raw2)"/>
-    <arg name="image_raw3" value="$(var image_raw3)"/>
-    <arg name="image_raw4" value="$(var image_raw4)"/>
-    <arg name="image_raw5" value="$(var image_raw5)"/>
-    <arg name="image_raw6" value="$(var image_raw6)"/>
-    <arg name="image_raw7" value="$(var image_raw7)"/>
-    <arg name="image_number" value="$(var image_number)"/>
-  </include> -->
 
 
   <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/front_camera_node_container.launch.py"/>
