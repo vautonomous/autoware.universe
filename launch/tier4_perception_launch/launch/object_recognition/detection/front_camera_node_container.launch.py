@@ -122,8 +122,10 @@ def generate_launch_description():
     ssd_fine_detector_param["mode"] = LaunchConfiguration("fine_detector_precision")
 
     classifier_input = "rough/rois"
+    use_ssd_fine_detector = "False"
     if LaunchConfiguration("enable_fine_detection") == "True" or LaunchConfiguration("enable_fine_detection") == "true":
         classifier_input = "rois"
+        use_ssd_fine_detector = "True"
 
     container = ComposableNodeContainer(
         name="front_camera_node_container",
@@ -269,7 +271,7 @@ def generate_launch_description():
             ),
         ],
         target_container=container,
-        condition=launch.conditions.IfCondition(LaunchConfiguration("enable_fine_detection")),
+        condition=launch.conditions.IfCondition(use_ssd_fine_detector),
     )
 
     set_container_executable = SetLaunchConfiguration(
