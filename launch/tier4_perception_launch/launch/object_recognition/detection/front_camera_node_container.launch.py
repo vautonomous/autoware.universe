@@ -121,6 +121,9 @@ def generate_launch_description():
     )
     ssd_fine_detector_param["mode"] = LaunchConfiguration("fine_detector_precision")
 
+    classifier_input = "rough/rois"
+    if LaunchConfiguration("enable_fine_detection") == "True" or LaunchConfiguration("enable_fine_detection") == "true":
+        classifier_input = "rois"
 
     container = ComposableNodeContainer(
         name="front_camera_node_container",
@@ -218,7 +221,7 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("~/input/image", "image_rect_front"),
-                    ("~/input/rois", "rough/rois"),
+                    ("~/input/rois", classifier_input),
                     ("~/output/traffic_signals", "traffic_signals"),
                 ],
                 extra_arguments=[
