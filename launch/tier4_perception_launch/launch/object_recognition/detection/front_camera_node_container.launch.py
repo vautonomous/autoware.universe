@@ -224,7 +224,7 @@ def generate_launch_description():
                 remappings=[
                     ("~/input/image", "image_rect_front"),
                     ("~/input/rois", classifier_input),
-                    ("~/output/traffic_signals", "traffic_signals"),
+                    ("~/output/traffic_signals", "/perception/traffic_light_recognition/traffic_signals"),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": bool(use_intra_process)}
