@@ -62,7 +62,9 @@
         <arg name="config_file" value="$(var config_file)"/>
         <arg name="extra_agg_config_file_sensing" value="$(var sensor_launch_pkg)/config/diagnostic_aggregator/sensor_kit.param.yaml"/>
         <arg name="extra_agg_config_file_vehicle" value="$(var diagnostic_aggregator_vehicle_param_path)"/>
-        <arg name="use_emergency_hold" value="false"/>
+        <arg name="use_emergency_hold" value="true"/>
+        <arg name="hazard_recovery_timeout" value="0.1"/>
+        <arg name="emergency_hazard_level" value="3"/> <!-- spf will be emergency -->
       </include>
     </group>
 
