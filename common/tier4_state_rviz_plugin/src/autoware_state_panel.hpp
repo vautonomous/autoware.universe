@@ -34,6 +34,7 @@
 #include <autoware_adapi_v1_msgs/srv/change_operation_mode.hpp>
 #include <autoware_adapi_v1_msgs/srv/clear_route.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
+#include <std_srvs/srv/trigger.hpp>
 #include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
@@ -89,6 +90,7 @@ protected:
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr sub_gear_;
 
   rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedPtr client_emergency_stop_;
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client_clear_internal_emergency_;
   rclcpp::Subscription<tier4_external_api_msgs::msg::Emergency>::SharedPtr sub_emergency_;
 
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
@@ -157,6 +159,8 @@ protected:
   QSpinBox * pub_velocity_limit_input_;
   QPushButton * emergency_button_ptr_;
 
+  bool current_external_emergency_{false};
+  bool current_internal_emergency_{false};
   bool current_emergency_{false};
 
   template <typename T>
