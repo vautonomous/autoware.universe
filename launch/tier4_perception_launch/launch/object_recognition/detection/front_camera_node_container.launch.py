@@ -72,7 +72,7 @@ def generate_launch_description():
 
     ssd_fine_detector_share_dir = get_package_share_directory("traffic_light_ssd_fine_detector")
     classifier_share_dir = get_package_share_directory("traffic_light_classifier")
-    add_launch_arg("enable_fine_detection", "False")
+    add_launch_arg("enable_fine_detection", "True")
 
     # traffic_light_ssd_fine_detector
     add_launch_arg(
@@ -121,11 +121,14 @@ def generate_launch_description():
     )
     ssd_fine_detector_param["mode"] = LaunchConfiguration("fine_detector_precision")
 
-    classifier_input = "rough/rois"
-    use_ssd_fine_detector = "False"
-    if LaunchConfiguration("enable_fine_detection") == "True" or LaunchConfiguration("enable_fine_detection") == "true":
-        classifier_input = "rois"
-        use_ssd_fine_detector = "True"
+
+    classifier_input = "rois"
+    use_ssd_fine_detector = "True"
+
+    # if LaunchConfiguration("enable_fine_detection") == "True" or LaunchConfiguration("enable_fine_detection") == "true":
+    #     classifier_input = "rois"
+    #     use_ssd_fine_detector = "True"
+
 
     container = ComposableNodeContainer(
         name="front_camera_node_container",
@@ -236,14 +239,15 @@ def generate_launch_description():
                 name="traffic_light_roi_visualizer",
                 parameters=[create_parameter_dict("enable_fine_detection")],
                 remappings=[
-                    ("~/input/image", input_image),
-                    ("~/input/rois", "rois"),
-                    ("~/input/rough/rois", "rough/rois"),
-                    ("~/input/traffic_signals", "traffic_signals"),
+                    ("~/input/image", "image_rect_front"),
+                    ("~/input/rois", "/perception/object_recognition/detection/rois"),
+                    ("~/input/rough/rois", "/perception/object_recognition/detection/rough/rois"),
+                    ("~/input/traffic_signals", "/perception/traffic_light_recognition/traffic_signals"),
                     ("~/output/image", "debug/rois"),
                     ("~/output/image/compressed", "debug/rois/compressed"),
                     ("~/output/image/compressedDepth", "debug/rois/compressedDepth"),
                     ("~/output/image/theora", "debug/rois/theora"),
+                    ("enable_fine_detection", "true"),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": bool(use_intra_process)}
@@ -261,7 +265,7 @@ def generate_launch_description():
                 name="traffic_light_ssd_fine_detector",
                 parameters=[ssd_fine_detector_param],
                 remappings=[
-                    ("~/input/image", input_image),
+                    ("~/input/image", "image_rect_front"),
                     ("~/input/rois", "rough/rois"),
                     ("~/output/rois", "rois"),
                 ],
