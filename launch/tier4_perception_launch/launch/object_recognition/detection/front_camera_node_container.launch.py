@@ -70,7 +70,7 @@ def generate_launch_description():
 
 
 
-    camera_param_path = "/home/volt/projects/volt_drivers_ws/src/arena_camera/param/front_camera.param.yaml"
+    camera_param_path = "/home/volt/projects/volt_drivers_ws/src/lucid_vision_driver/param/front_camera.param.yaml"
 
     with open(camera_param_path, "r") as f:
         camera_yaml_param = yaml.safe_load(f)["/**"]["ros__parameters"]
@@ -143,7 +143,7 @@ def generate_launch_description():
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=[
             ComposableNode(
-                package="arena_camera",
+                package="lucid_vision_driver",
                 plugin="ArenaCameraNode",
                 name="front_arena_camera_node",
                 parameters=[{
@@ -151,11 +151,11 @@ def generate_launch_description():
                     "frame_id": camera_yaml_param['frame_id'],
                     "pixel_format": camera_yaml_param['pixel_format'],
                     "serial_no": camera_yaml_param['serial_no'],
+                    "camera_info_url": camera_yaml_param['camera_info_url'],
                     "fps": camera_yaml_param['fps'],
                     "horizontal_binning": camera_yaml_param['horizontal_binning'],
                     "vertical_binning": camera_yaml_param['vertical_binning'],
-                    "resize_image": camera_yaml_param['resize_image'],
-                    "camera_info_url": camera_yaml_param['camera_info_url'],
+                    "use_default_device_settings": camera_yaml_param['use_default_device_settings'],
                     "exposure_auto": camera_yaml_param['exposure_auto'],
                     "exposure_target": camera_yaml_param['exposure_target'],
                     "gain_auto": camera_yaml_param['gain_auto'],
