@@ -32,18 +32,8 @@ from launch import LaunchContext
 
 import yaml
 
-
-
-
 def generate_launch_description():
     launch_arguments = []
-
-    def add_launch_arg(name: str, default_value=None, description=None):
-        # a default_value of None is equivalent to not passing that kwarg at all
-        launch_arguments.append(
-            DeclareLaunchArgument(name, default_value=default_value, description=description)
-        )
-
     context = LaunchContext()
 
     use_multithread = "True"
@@ -68,15 +58,12 @@ def generate_launch_description():
     with open(tensorrt_config_path, "r") as f:
         tensorrt_yaml_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
-
-
     camera_param_path = "/home/volt/projects/volt_drivers_ws/src/lucid_vision_driver/param/front_camera.param.yaml"
 
     with open(camera_param_path, "r") as f:
         camera_yaml_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     #FOR TRAFFIC LIGHT
-
     def add_launch_arg(name: str, default_value=None, description=None):
         # a default_value of None is equivalent to not passing that kwarg at all
         launch_arguments.append(
@@ -85,8 +72,7 @@ def generate_launch_description():
 
     ssd_fine_detector_share_dir = get_package_share_directory("traffic_light_ssd_fine_detector")
     classifier_share_dir = get_package_share_directory("traffic_light_classifier")
-    add_launch_arg("enable_fine_detection", "True")
-    add_launch_arg("input/image", "/sensing/camera/traffic_light/image_raw")
+    add_launch_arg("enable_fine_detection", "False")
 
     # traffic_light_ssd_fine_detector
     add_launch_arg(
@@ -109,7 +95,7 @@ def generate_launch_description():
         os.path.join(classifier_share_dir, "data", "traffic_light_classifier_mobilenetv2.onnx"),
     )
     add_launch_arg("label_file_path", os.path.join(classifier_share_dir, "data", "lamp_labels.txt"))
-    add_launch_arg("precision", "fp32")
+    add_launch_arg("precision", "fp16")
     add_launch_arg("input_c", "3")
     add_launch_arg("input_h", "224")
     add_launch_arg("input_w", "224")
@@ -135,6 +121,11 @@ def generate_launch_description():
     )
     ssd_fine_detector_param["mode"] = LaunchConfiguration("fine_detector_precision")
 
+    classifier_input = "rough/rois"
+    use_ssd_fine_detector = "False"
+    if LaunchConfiguration("enable_fine_detection") == "True" or LaunchConfiguration("enable_fine_detection") == "true":
+        classifier_input = "rois"
+        use_ssd_fine_detector = "True"
 
     container = ComposableNodeContainer(
         name="front_camera_node_container",
@@ -232,9 +223,8 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("~/input/image", "image_rect_front"),
-                    ("~/input/rois", "rough/rois"),
-                    # ("~/input/rois", "rois"),
-                    ("~/output/traffic_signals", "traffic_signals"),
+                    ("~/input/rois", classifier_input),
+                    ("~/output/traffic_signals", "/perception/traffic_light_recognition/traffic_signals"),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": bool(use_intra_process)}
@@ -281,7 +271,7 @@ def generate_launch_description():
             ),
         ],
         target_container=container,
-        condition=launch.conditions.IfCondition(LaunchConfiguration("enable_fine_detection")),
+        condition=launch.conditions.IfCondition(use_ssd_fine_detector),
     )
 
     set_container_executable = SetLaunchConfiguration(

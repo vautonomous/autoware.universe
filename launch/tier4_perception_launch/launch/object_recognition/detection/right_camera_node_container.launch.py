@@ -32,17 +32,7 @@ from launch import LaunchContext
 
 import yaml
 
-
-
-
 def generate_launch_description():
-    launch_arguments = []
-
-    def add_launch_arg(name: str, default_value=None, description=None):
-        # a default_value of None is equivalent to not passing that kwarg at all
-        launch_arguments.append(
-            DeclareLaunchArgument(name, default_value=default_value, description=description)
-        )
 
     context = LaunchContext()
 
@@ -68,18 +58,10 @@ def generate_launch_description():
     with open(tensorrt_config_path, "r") as f:
         tensorrt_yaml_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
-
-
     camera_param_path = "/home/volt/projects/volt_drivers_ws/src/lucid_vision_driver/param/right_camera.param.yaml"
+
     with open(camera_param_path, "r") as f:
         camera_yaml_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-
-    def create_parameter_dict(*args):
-        result = {}
-        for x in args:
-            result[x] = LaunchConfiguration(x)
-        return result
-
 
     container = ComposableNodeContainer(
         name="right_camera_node_container",
@@ -87,21 +69,32 @@ def generate_launch_description():
         package="rclcpp_components",
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=[
-            # ComposableNode(
-            #     package="image_transport_decompressor",
-            #     plugin="image_preprocessor::ImageTransportDecompressor",
-            #     name="right_camera_image_decompressor",
-            #     parameters=[{"encoding": "rgb8"}],
-            #     remappings=[
-            #         (
-            #             "~/input/compressed_image", input_image + "/compressed",
-            #         ),
-            #         ("~/output/raw_image", input_image),
-            #     ],
-            #     extra_arguments=[
-            #         {"use_intra_process_comms": bool(use_intra_process)}
-            #     ],
-            # ),
+            ComposableNode(
+                package="lucid_vision_driver",
+                plugin="ArenaCameraNode",
+                name="right_arena_camera_node",
+                parameters=[{
+                    "camera_name": camera_yaml_param['camera_name'],
+                    "frame_id": camera_yaml_param['frame_id'],
+                    "pixel_format": camera_yaml_param['pixel_format'],
+                    "serial_no": camera_yaml_param['serial_no'],
+                    "camera_info_url": camera_yaml_param['camera_info_url'],
+                    "fps": camera_yaml_param['fps'],
+                    "horizontal_binning": camera_yaml_param['horizontal_binning'],
+                    "vertical_binning": camera_yaml_param['vertical_binning'],
+                    "use_default_device_settings": camera_yaml_param['use_default_device_settings'],
+                    "exposure_auto": camera_yaml_param['exposure_auto'],
+                    "exposure_target": camera_yaml_param['exposure_target'],
+                    "gain_auto": camera_yaml_param['gain_auto'],
+                    "gain_target": camera_yaml_param['gain_target'],
+                    "gamma_target": camera_yaml_param['gamma_target'],
+                }],
+                remappings=[
+                ],
+                extra_arguments=[
+                    {"use_intra_process_comms": bool(use_intra_process)}
+                ],
+            ),
             ComposableNode(
                 package='image_rectifier',
                 plugin='image_preprocessor::ImageRectifier',
@@ -137,39 +130,12 @@ def generate_launch_description():
                         "detections_per_im": tensorrt_yaml_param['detections_per_im'],
                         "use_darknet_layer": tensorrt_yaml_param['use_darknet_layer'],
                         "ignore_thresh": tensorrt_yaml_param['ignore_thresh'],
-
                     }
                 ],
                 remappings=[
                     ("in/image", 'image_rect_right'),
                     ("out/objects", output_topic),
                     ("out/image", output_topic + "/debug/image"),
-                ],
-                extra_arguments=[
-                    {"use_intra_process_comms": bool(use_intra_process)}
-                ],
-            ),
-            ComposableNode(
-                package="lucid_vision_driver",
-                plugin="ArenaCameraNode",
-                name="right_arena_camera_node",
-                parameters=[{
-                    "camera_name": camera_yaml_param['camera_name'],
-                    "frame_id": camera_yaml_param['frame_id'],
-                    "pixel_format": camera_yaml_param['pixel_format'],
-                    "serial_no": camera_yaml_param['serial_no'],
-                    "camera_info_url": camera_yaml_param['camera_info_url'],
-                    "fps": camera_yaml_param['fps'],
-                    "horizontal_binning": camera_yaml_param['horizontal_binning'],
-                    "vertical_binning": camera_yaml_param['vertical_binning'],
-                    "use_default_device_settings": camera_yaml_param['use_default_device_settings'],
-                    "exposure_auto": camera_yaml_param['exposure_auto'],
-                    "exposure_target": camera_yaml_param['exposure_target'],
-                    "gain_auto": camera_yaml_param['gain_auto'],
-                    "gain_target": camera_yaml_param['gain_target'],
-                    "gamma_target": camera_yaml_param['gamma_target'],
-                }],
-                remappings=[
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": bool(use_intra_process)}
@@ -193,7 +159,6 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            *launch_arguments,
             set_container_executable,
             set_container_mt_executable,
             container,
