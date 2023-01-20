@@ -29,7 +29,7 @@
 
       # params for detection area
       detection_area:
-        lateral_margin: 0.3                  # offset from vehicle side edge for expanding the search area of the surrounding point cloud [m]
+        lateral_margin: 0.5                  # offset from vehicle side edge for expanding the search area of the surrounding point cloud [m]
 
       # params for velocity
       target_velocity:
