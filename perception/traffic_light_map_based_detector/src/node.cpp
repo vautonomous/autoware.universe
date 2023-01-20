@@ -64,7 +64,7 @@ cv::Point2d calcRawImagePointFromPoint3D(
   const image_geometry::PinholeCameraModel & pinhole_camera_model, const cv::Point3d & point3d)
 {
   cv::Point2d rectified_image_point = pinhole_camera_model.project3dToPixel(point3d);
-//  return pinhole_camera_model.unrectifyPoint(rectified_image_point);
+  //  return pinhole_camera_model.unrectifyPoint(rectified_image_point);
   return rectified_image_point;
 }
 
@@ -119,12 +119,8 @@ MapBasedDetector::MapBasedDetector(const rclcpp::NodeOptions & node_options)
   config_.max_vibration_width = declare_parameter<double>("max_vibration_width", 0.0);
   config_.max_vibration_depth = declare_parameter<double>("max_vibration_depth", 0.0);
 
-  tl_offset_x_ = declare_parameter<double>("tl_offset_x", 0.0);
-  tl_offset_y_ = declare_parameter<double>("tl_offset_y", 0.0);
-  tl_offset_z_ = declare_parameter<double>("tl_offset_z", 0.0);
-  tl_offset_r_deg_ = declare_parameter<double>("tl_offset_r_deg", 0.0) / 180.0 * M_PI;
-  tl_offset_p_deg_ = declare_parameter<double>("tl_offset_p_deg", 0.0) / 180.0 * M_PI;
-  tl_offset_y_deg_ = declare_parameter<double>("tl_offset_y_deg", 0.0) / 180.0 * M_PI;
+  scale_start_distance_ = declare_parameter<double>("scale_start_distance", 15.0);
+  scale_factor_ = declare_parameter<double>("scale_factor", 7.0);
 }
 
 void MapBasedDetector::cameraInfoCallback(
@@ -209,15 +205,6 @@ bool MapBasedDetector::getTrafficLightRoi(
   // id
   tl_roi.id = traffic_light.id();
 
-  tf2::Quaternion quat_offset;
-  quat_offset.setRPY(tl_offset_r_deg_, tl_offset_p_deg_, tl_offset_y_deg_);
-
-  tf2::Transform tf_offset(quat_offset, tf2::Vector3(tl_offset_x_, tl_offset_y_, tl_offset_z_));
-  // for roi.x_offset and roi.y_offset
-
-//  double dist_to_tl_approx = 0.0;
-//  double width_multiplier = 1.0;
-
   {
     tf2::Transform tf_map2tl(
       tf2::Quaternion(0, 0, 0, 1),
@@ -225,10 +212,7 @@ bool MapBasedDetector::getTrafficLightRoi(
         tl_left_down_point.x(), tl_left_down_point.y(), tl_left_down_point.z() + tl_height));
 
     tf2::Transform tf_camera2tl;
-    tf_camera2tl = tf_map2camera.inverse() * tf_offset * tf_map2tl;
-//    dist_to_tl_approx = tf_camera2tl.getOrigin().length();
-//    dist_to_tl_approx = std::clamp(0.1,dist_to_tl_approx);
-//    width_multiplier = 1/dist_to_tl_approx;
+    tf_camera2tl = tf_map2camera.inverse() * tf_map2tl;
 
     // max vibration
     const double max_vibration_x =
@@ -258,7 +242,7 @@ bool MapBasedDetector::getTrafficLightRoi(
       tf2::Quaternion(0, 0, 0, 1),
       tf2::Vector3(tl_right_down_point.x(), tl_right_down_point.y(), tl_right_down_point.z()));
     tf2::Transform tf_camera2tl;
-    tf_camera2tl = tf_map2camera.inverse() * tf_offset * tf_map2tl;
+    tf_camera2tl = tf_map2camera.inverse() * tf_map2tl;
     // max vibration
     const double max_vibration_x =
       std::sin(config.max_vibration_yaw * 0.5) * tf_camera2tl.getOrigin().z() +
@@ -283,6 +267,50 @@ bool MapBasedDetector::getTrafficLightRoi(
       return false;
     }
   }
+
+  tf2::Transform tf_map2tl(
+    tf2::Quaternion(0, 0, 0, 1),
+    tf2::Vector3(
+      (tl_left_down_point.x() + tl_right_down_point.x()) / 2,
+      (tl_left_down_point.y() + tl_right_down_point.y()) / 2,
+      (tl_left_down_point.z() + tl_right_down_point.z()) / 2 + tl_height));
+
+  tf2::Transform tf_camera2tl;
+  tf_camera2tl = tf_map2camera.inverse() * tf_map2tl;
+
+  float distance_to_tl = std::sqrt(
+    std::pow(tf_camera2tl.getOrigin().x(), 2) + std::pow(tf_camera2tl.getOrigin().y(), 2) +
+    std::pow(tf_camera2tl.getOrigin().z(), 2));
+  RCLCPP_INFO(get_logger(), "Distance_to_tl: %f", distance_to_tl);
+
+  float scale = 1.0;
+
+  if (distance_to_tl <= scale_start_distance_) {
+    scale += (scale_factor_ / distance_to_tl);
+
+    cv::Point2d left_up_point;
+
+    left_up_point.x = tl_roi.roi.x_offset - (tl_roi.roi.width * scale - tl_roi.roi.width) / 2;
+    left_up_point.y = tl_roi.roi.y_offset - (tl_roi.roi.height * scale - tl_roi.roi.height) / 2;
+
+    roundInImageFrame(pinhole_camera_model, left_up_point);
+    tl_roi.roi.x_offset = left_up_point.x;
+    tl_roi.roi.y_offset = left_up_point.y;
+
+    cv::Point2d right_down_point;
+    right_down_point.x = tl_roi.roi.x_offset + tl_roi.roi.width * (scale + (scale - 1) / 2.0);
+    right_down_point.y = tl_roi.roi.y_offset + tl_roi.roi.height * (scale - (scale - 1) / 2.0);
+
+    roundInImageFrame(pinhole_camera_model, right_down_point);
+
+    tl_roi.roi.width = right_down_point.x - tl_roi.roi.x_offset;
+    tl_roi.roi.height = right_down_point.y - tl_roi.roi.y_offset;
+
+    if (tl_roi.roi.width < 1 || tl_roi.roi.height < 1) {
+      return false;
+    }
+  }
+
   return true;
 }
 
