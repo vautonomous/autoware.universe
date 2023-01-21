@@ -92,7 +92,8 @@ namespace traffic_light
 MapBasedDetector::MapBasedDetector(const rclcpp::NodeOptions & node_options)
 : Node("traffic_light_map_based_detector", node_options),
   tf_buffer_(this->get_clock()),
-  tf_listener_(tf_buffer_)
+  tf_listener_(tf_buffer_),
+  tl_ptr_(std::make_unique<traffic_light::TrafficLight>(0, 0, 0, 0))
 {
   using std::placeholders::_1;
 
@@ -106,6 +107,9 @@ MapBasedDetector::MapBasedDetector(const rclcpp::NodeOptions & node_options)
   route_sub_ = create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
     "~/input/route", rclcpp::QoS{1}.transient_local(),
     std::bind(&MapBasedDetector::routeCallback, this, _1));
+
+  callback_handle_ = this->add_on_set_parameters_callback(
+    std::bind(&MapBasedDetector::parameters_callback, this, std::placeholders::_1));
 
   // publishers
   roi_pub_ = this->create_publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>(
@@ -121,6 +125,19 @@ MapBasedDetector::MapBasedDetector(const rclcpp::NodeOptions & node_options)
 
   scale_start_distance_ = declare_parameter<double>("scale_start_distance", 15.0);
   scale_factor_ = declare_parameter<double>("scale_factor", 7.0);
+
+  overwrite_tl_ = declare_parameter<bool>("overwrite_traffic_light", false);
+  tl_x_ = declare_parameter<double>("tl_x", 0);
+  tl_y_ = declare_parameter<double>("tl_y", 0);
+  tl_z_ = declare_parameter<double>("tl_z", 0);
+  tl_height_ = declare_parameter<double>("tl_height", 0);
+  tl_ptr_->setX(tl_x_);
+  tl_ptr_->setY(tl_y_);
+  tl_ptr_->setZ(tl_z_);
+  tl_ptr_->setHeight(tl_height_);
+
+  pub_fake_tl_ =
+    this->create_publisher<visualization_msgs::msg::Marker>("~/debug/fake_tl_marker", 1);
 }
 
 void MapBasedDetector::cameraInfoCallback(
@@ -179,12 +196,14 @@ void MapBasedDetector::cameraInfoCallback(
     autoware_auto_perception_msgs::msg::TrafficLightRoi tl_roi;
     if (!getTrafficLightRoi(
           camera_pose_stamped.pose, pinhole_camera_model, traffic_light, config_, tl_roi)) {
+      RCLCPP_WARN(get_logger(), "failed to get traffic light roi");
       continue;
     }
     output_msg.rois.push_back(tl_roi);
   }
   roi_pub_->publish(output_msg);
   publishVisibleTrafficLights(camera_pose_stamped, visible_traffic_lights, viz_pub_);
+  tlFakePosePublisher(camera_pose_stamped);
 }
 
 bool MapBasedDetector::getTrafficLightRoi(
@@ -193,9 +212,39 @@ bool MapBasedDetector::getTrafficLightRoi(
   const lanelet::ConstLineString3d traffic_light, const Config & config,
   autoware_auto_perception_msgs::msg::TrafficLightRoi & tl_roi)
 {
-  const double tl_height = traffic_light.attributeOr("height", 0.0);
-  const auto & tl_left_down_point = traffic_light.front();
-  const auto & tl_right_down_point = traffic_light.back();
+  lanelet::Point3d left_down_point_3d;
+  lanelet::Point3d right_down_point_3d;
+  double tl_height;
+  if (!overwrite_tl_) {
+    tl_height = traffic_light.attributeOr("height", 0.0);
+    const auto & tl_left_down_point = traffic_light.front();
+    const auto & tl_right_down_point = traffic_light.back();
+    left_down_point_3d = lanelet::Point3d(
+      lanelet::utils::getId(), tl_left_down_point.x(), tl_left_down_point.y(),
+      tl_left_down_point.z());
+    right_down_point_3d = lanelet::Point3d(
+      lanelet::utils::getId(), tl_right_down_point.x(), tl_right_down_point.y(),
+      tl_right_down_point.z());
+  } else {
+    lanelet::LineString3d tl_line_string = tl_ptr_->getTrafficLight3d();
+    tl_height = tl_ptr_->getHeight();
+    const auto & tl_left_down_point = tl_line_string.front();
+    const auto & tl_right_down_point = tl_line_string.back();
+    left_down_point_3d = lanelet::Point3d(
+      lanelet::utils::getId(), tl_left_down_point.x(), tl_left_down_point.y(),
+      tl_left_down_point.z());
+    right_down_point_3d = lanelet::Point3d(
+      lanelet::utils::getId(), tl_right_down_point.x(), tl_right_down_point.y(),
+      tl_right_down_point.z());
+  }
+
+  //  RCLCPP_INFO(get_logger(), "tl_height: %f", tl_height);
+  //  RCLCPP_INFO(
+  //    get_logger(), "Left down x:%f   y:%f    z:%f", left_down_point_3d.x(),
+  //    left_down_point_3d.y(), left_down_point_3d.z());
+  //  RCLCPP_INFO(
+  //    get_logger(), "Right down x:%f   y:%f    z:%f", right_down_point_3d.x(),
+  //    right_down_point_3d.y(), right_down_point_3d.z());
 
   tf2::Transform tf_map2camera(
     tf2::Quaternion(
@@ -209,7 +258,7 @@ bool MapBasedDetector::getTrafficLightRoi(
     tf2::Transform tf_map2tl(
       tf2::Quaternion(0, 0, 0, 1),
       tf2::Vector3(
-        tl_left_down_point.x(), tl_left_down_point.y(), tl_left_down_point.z() + tl_height));
+        left_down_point_3d.x(), left_down_point_3d.y(), left_down_point_3d.z() + tl_height));
 
     tf2::Transform tf_camera2tl;
     tf_camera2tl = tf_map2camera.inverse() * tf_map2tl;
@@ -240,7 +289,7 @@ bool MapBasedDetector::getTrafficLightRoi(
   {
     tf2::Transform tf_map2tl(
       tf2::Quaternion(0, 0, 0, 1),
-      tf2::Vector3(tl_right_down_point.x(), tl_right_down_point.y(), tl_right_down_point.z()));
+      tf2::Vector3(right_down_point_3d.x(), right_down_point_3d.y(), right_down_point_3d.z()));
     tf2::Transform tf_camera2tl;
     tf_camera2tl = tf_map2camera.inverse() * tf_map2tl;
     // max vibration
@@ -271,9 +320,9 @@ bool MapBasedDetector::getTrafficLightRoi(
   tf2::Transform tf_map2tl(
     tf2::Quaternion(0, 0, 0, 1),
     tf2::Vector3(
-      (tl_left_down_point.x() + tl_right_down_point.x()) / 2,
-      (tl_left_down_point.y() + tl_right_down_point.y()) / 2,
-      (tl_left_down_point.z() + tl_right_down_point.z()) / 2 + tl_height));
+      (left_down_point_3d.x() + right_down_point_3d.x()) / 2,
+      (left_down_point_3d.y() + right_down_point_3d.y()) / 2,
+      (left_down_point_3d.z() + right_down_point_3d.z()) / 2 + tl_height));
 
   tf2::Transform tf_camera2tl;
   tf_camera2tl = tf_map2camera.inverse() * tf_map2tl;
@@ -281,7 +330,7 @@ bool MapBasedDetector::getTrafficLightRoi(
   float distance_to_tl = std::sqrt(
     std::pow(tf_camera2tl.getOrigin().x(), 2) + std::pow(tf_camera2tl.getOrigin().y(), 2) +
     std::pow(tf_camera2tl.getOrigin().z(), 2));
-  RCLCPP_INFO(get_logger(), "Distance_to_tl: %f", distance_to_tl);
+//  RCLCPP_INFO(get_logger(), "Distance_to_tl: %f", distance_to_tl);
 
   float scale = 1.0;
 
@@ -341,6 +390,7 @@ void MapBasedDetector::mapCallback(
 void MapBasedDetector::routeCallback(
   const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr input_msg)
 {
+  RCLCPP_WARN(get_logger(), "routeCallbackrouteCallbackrouteCallbackrouteCallbackrouteCallback");
   if (lanelet_map_ptr_ == nullptr) {
     RCLCPP_WARN(get_logger(), "cannot set traffic light in route because don't receive map");
     return;
@@ -538,6 +588,120 @@ void MapBasedDetector::publishVisibleTrafficLights(
   }
   pub->publish(output_msg);
 }
+
+rcl_interfaces::msg::SetParametersResult MapBasedDetector::parameters_callback(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+  RCLCPP_INFO(this->get_logger(), "Parameter callback");
+  auto print_status = [this](const rclcpp::Parameter & parameter) {
+    if (
+      parameter.get_name() == "overwrite_traffic_light" || parameter.get_name() == "tl_x" ||
+      parameter.get_name() == "tl_y" || parameter.get_name() == "tl_z") {
+      RCLCPP_INFO(this->get_logger(), "%s", parameter.get_name().c_str());
+      RCLCPP_INFO(this->get_logger(), "%s", parameter.value_to_string().c_str());
+    }
+  };
+
+  for (const auto & param : parameters) {
+    if (param.get_name() == "overwrite_traffic_light") {
+      if (param.get_type() == rclcpp::ParameterType::PARAMETER_BOOL) {
+        overwrite_tl_ = param.as_bool();
+        result.successful = true;
+        print_status(param);
+      }
+    } else if (param.get_name() == "tl_x") {
+      if (param.get_type() == rclcpp::ParameterType::PARAMETER_DOUBLE) {
+        tl_ptr_->setX(param.as_double());
+        result.successful = true;
+        print_status(param);
+      }
+    } else if (param.get_name() == "tl_y") {
+      if (param.get_type() == rclcpp::ParameterType::PARAMETER_DOUBLE) {
+        tl_ptr_->setY(param.as_double());
+        result.successful = true;
+        print_status(param);
+      }
+
+    } else if (param.get_name() == "tl_z") {
+      if (param.get_type() == rclcpp::ParameterType::PARAMETER_DOUBLE) {
+        tl_ptr_->setZ(param.as_double());
+        result.successful = true;
+        print_status(param);
+      }
+    } else if (param.get_name() == "tl_height") {
+      if (param.get_type() == rclcpp::ParameterType::PARAMETER_DOUBLE) {
+        tl_ptr_->setHeight(param.as_double());
+        result.successful = true;
+        print_status(param);
+      }
+    }
+  }
+
+  return result;
+}
+
+void MapBasedDetector::tlFakePosePublisher(
+  const geometry_msgs::msg::PoseStamped camera_pose_stamped)
+{
+  const auto traffic_light = tl_ptr_->getTrafficLight3d();
+
+  const auto & tl_left_down_point = traffic_light.front();
+  const auto & tl_right_down_point = traffic_light.back();
+  const double tl_height = traffic_light.attributeOr("height", 0.0);
+  const int id = traffic_light.id();
+
+  geometry_msgs::msg::Point tl_central_point;
+  tl_central_point.x = (tl_right_down_point.x() + tl_left_down_point.x()) / 2.0;
+  tl_central_point.y = (tl_right_down_point.y() + tl_left_down_point.y()) / 2.0;
+  tl_central_point.z = (tl_right_down_point.z() + tl_left_down_point.z() + tl_height) / 2.0;
+
+  visualization_msgs::msg::Marker marker;
+
+  tf2::Transform tf_map2camera(
+    tf2::Quaternion(
+      camera_pose_stamped.pose.orientation.x, camera_pose_stamped.pose.orientation.y,
+      camera_pose_stamped.pose.orientation.z, camera_pose_stamped.pose.orientation.w),
+    tf2::Vector3(
+      camera_pose_stamped.pose.position.x, camera_pose_stamped.pose.position.y,
+      camera_pose_stamped.pose.position.z));
+  tf2::Transform tf_map2tl(
+    tf2::Quaternion(0, 0, 0, 1),
+    tf2::Vector3(tl_central_point.x, tl_central_point.y, tl_central_point.z));
+  tf2::Transform tf_camera2tl;
+  tf_camera2tl = tf_map2camera.inverse() * tf_map2tl;
+
+  marker.header = camera_pose_stamped.header;
+  marker.header.stamp = this->now();
+  marker.frame_locked = true;
+  marker.ns = "ns";
+  marker.id = id;
+  marker.lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker.type = visualization_msgs::msg::Marker::SPHERE;
+  marker.pose.position.x = tf_camera2tl.getOrigin().x();
+  marker.pose.position.y = tf_camera2tl.getOrigin().y();
+  marker.pose.position.z = tf_camera2tl.getOrigin().z();
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+
+  float s = 0.3;
+
+  marker.scale.x = s;
+  marker.scale.y = s;
+  marker.scale.z = s;
+
+  marker.color.r = 1.0f;
+  marker.color.g = 1.0f;
+  marker.color.b = 1.0f;
+  marker.color.a = 0.999f;
+
+  pub_fake_tl_->publish(marker);
+}
+
 }  // namespace traffic_light
 
 #include <rclcpp_components/register_node_macro.hpp>

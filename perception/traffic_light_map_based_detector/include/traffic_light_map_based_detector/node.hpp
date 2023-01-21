@@ -33,6 +33,8 @@
 #ifndef TRAFFIC_LIGHT_MAP_BASED_DETECTOR__NODE_HPP_
 #define TRAFFIC_LIGHT_MAP_BASED_DETECTOR__NODE_HPP_
 
+#include "rcl_interfaces/msg/set_parameters_result.hpp"
+
 #include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -57,6 +59,69 @@
 
 namespace traffic_light
 {
+
+class TrafficLight
+{
+private:
+  float x;
+  float y;
+  float z;
+  float height;
+
+  std::mutex mtx;
+
+public:
+  TrafficLight(float x = 0, float y = 0, float z = 0, float height = 0)
+  {
+    this->x = x;
+    this->y = y;
+    this->z = z;
+    this->height = height;
+  }
+
+  void setX(float x)
+  {
+    mtx.lock();
+    this->x = x;
+    mtx.unlock();
+  }
+
+  void setY(float y)
+  {
+    mtx.lock();
+    this->y = y;
+    mtx.unlock();
+  }
+
+  void setZ(float z)
+  {
+    mtx.lock();
+    this->z = z;
+    mtx.unlock();
+  }
+  void setHeight(float height)
+  {
+    mtx.lock();
+    this->height = height;
+    mtx.unlock();
+  }
+  double getHeight() { return this->height; }
+
+  lanelet::LineString3d getTrafficLight3d()
+  {
+    const double x_offset = 0.10;
+    const double y_offset = 0.20;
+
+    lanelet::LineString3d traffic_light_3d;
+    traffic_light_3d.push_back(
+      lanelet::Point3d(lanelet::utils::getId(), x - x_offset / 2, y + y_offset / 2, z));
+    traffic_light_3d.push_back(
+      lanelet::Point3d(lanelet::utils::getId(), x + x_offset / 2, y - y_offset / 2, z));
+    traffic_light_3d.setAttribute("height", this->getHeight());
+    return traffic_light_3d;
+  }
+};
+
 class MapBasedDetector : public rclcpp::Node
 {
 public:
@@ -105,6 +170,22 @@ private:
   double scale_start_distance_;
   double scale_factor_;
 
+  bool overwrite_tl_;
+  double tl_x_;
+  double tl_y_;
+  double tl_z_;
+  double tl_height_;
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_fake_tl_;
+
+  rcl_interfaces::msg::SetParametersResult parameters_callback(
+    const std::vector<rclcpp::Parameter> & parameters);
+  OnSetParametersCallbackHandle::SharedPtr callback_handle_;
+
+  rclcpp::TimerBase::SharedPtr timer_;
+  lanelet::LineString3d traffic_light_3d_;
+
+  std::shared_ptr<traffic_light::TrafficLight> tl_ptr_;
+
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr input_msg);
   void cameraInfoCallback(const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_msg);
   void routeCallback(const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr input_msg);
@@ -129,6 +210,8 @@ private:
     const geometry_msgs::msg::PoseStamped camera_pose_stamped,
     const std::vector<lanelet::ConstLineString3d> & visible_traffic_lights,
     const rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub);
+
+  void tlFakePosePublisher(const geometry_msgs::msg::PoseStamped camera_pose_stamped);
 };
 }  // namespace traffic_light
 #endif  // TRAFFIC_LIGHT_MAP_BASED_DETECTOR__NODE_HPP_
