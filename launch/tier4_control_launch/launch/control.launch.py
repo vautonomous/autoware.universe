@@ -287,6 +287,8 @@ def launch_setup(context, *args, **kwargs):
             operation_mode_transition_manager_component,
             obstacle_collision_checker_component,
         ],
+        output="screen",
+        
     )
 
     group = GroupAction(

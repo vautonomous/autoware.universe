@@ -18,7 +18,7 @@
       enable_pre_smoothing: true # enable EB
       skip_optimization: false # skip MPT and EB
       reset_prev_optimization: false
-      use_predicted_trajectory: true # use predicted trajectory calculated from base_link to check if vehicle is actually going to be outside of drivable area
+      use_predicted_trajectory: false # use predicted trajectory calculated from base_link to check if vehicle is actually going to be outside of drivable area
 
     common:
       # sampling
