@@ -64,7 +64,6 @@ pcl::PointCloud<pcl::PointXYZ> filterPointCloudByTrajectory(
       const double dx = trajectory_point.pose.position.x - point.x;
       const double dy = trajectory_point.pose.position.y - point.y;
       if (std::hypot(dx, dy) < radius) {
-
         filtered_pointcloud.points.push_back(point);
         break;
       }
@@ -101,8 +100,6 @@ Output ObstacleCollisionChecker::update(const Input & input)
   const auto abs_velocity = raw_abs_velocity < min_velocity ? 0.0 : raw_abs_velocity;
   const auto braking_distance =
     calcBrakingDistance(abs_velocity, param_.max_deceleration, param_.delay_time);
-
-
   output.resampled_trajectory = cutTrajectory(
     resampleTrajectory(*input.predicted_trajectory, param_.resample_interval), braking_distance);
   output.processing_time_map["resampleTrajectory"] = stop_watch.toc(true);
@@ -110,20 +107,8 @@ Output ObstacleCollisionChecker::update(const Input & input)
   // resample pointcloud
   const auto obstacle_pointcloud =
     getTransformedPointCloud(*input.obstacle_pointcloud, input.obstacle_transform->transform);
-
-
-  output.debug_cloud = obstacle_pointcloud;
-//  RCLCPP_WARN(
-//          rclcpp::get_logger("obstacle_collision_checker"),
-//          "[ObstacleCollisionChecker] obstacle_pointcloud Pointcloud size : %ld", obstacle_pointcloud.points.size() );
-//
   const auto filtered_obstacle_pointcloud = filterPointCloudByTrajectory(
     obstacle_pointcloud, output.resampled_trajectory, param_.search_radius);
-//  RCLCPP_WARN(
-//          rclcpp::get_logger("obstacle_collision_checker"),
-//          "[ObstacleCollisionChecker] filtered_obstacle_pointcloud Pointcloud size : %ld", filtered_obstacle_pointcloud.points.size() );
-
-
 
   output.vehicle_footprints =
     createVehicleFootprints(output.resampled_trajectory, param_, vehicle_info_);
@@ -255,6 +240,7 @@ bool ObstacleCollisionChecker::willCollide(
   const std::vector<LinearRing2d> & vehicle_footprints)
 {
   for (size_t i = 1; i < vehicle_footprints.size(); i++) {
+    // skip first footprint because surround obstacle checker handle it
     const auto & vehicle_footprint = vehicle_footprints.at(i);
     if (hasCollision(obstacle_pointcloud, vehicle_footprint)) {
       RCLCPP_WARN(
@@ -273,9 +259,9 @@ bool ObstacleCollisionChecker::hasCollision(
   for (const auto & point : obstacle_pointcloud.points) {
     if (boost::geometry::within(
           tier4_autoware_utils::Point2d{point.x, point.y}, vehicle_footprint)) {
-//      RCLCPP_WARN(
-//        rclcpp::get_logger("obstacle_collision_checker"),
-//        "[ObstacleCollisionChecker] Collide to Point x: %f y: %f", point.x, point.y);
+      RCLCPP_WARN(
+        rclcpp::get_logger("obstacle_collision_checker"),
+        "[ObstacleCollisionChecker] Collide to Point x: %f y: %f", point.x, point.y);
       return true;
     }
   }
