@@ -74,7 +74,6 @@ private:
   // Publisher
   std::shared_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
   std::shared_ptr<tier4_autoware_utils::ProcessingTimePublisher> time_publisher_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_publisher_;
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
@@ -90,6 +89,8 @@ private:
 
   // Dynamic Reconfigure
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
+  rcl_interfaces::msg::SetParametersResult paramCallback(
+    const std::vector<rclcpp::Parameter> & parameters);
 
   // Core
   Input input_;
