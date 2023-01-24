@@ -240,19 +240,14 @@ std::pair<size_t, TrajectoryPoint> findStopPoint(
 
 bool isInBrakeDistance(
   const TrajectoryPoints & trajectory, const size_t stop_idx, const double current_velocity,
-  const double current_acceleration, const double max_deceleration, const double delay_time_sec)
+  const double max_deceleration, const double delay_time_sec)
 {
   const auto distance_to_obstacle = motion_utils::calcSignedArcLength(
     trajectory, trajectory.front().pose.position, trajectory.at(stop_idx).pose.position);
 
-  const double distance_in_delay = current_velocity * delay_time_sec +
-                                   current_acceleration * delay_time_sec * delay_time_sec * 0.5;
-
-  const double velocity_after_delay = current_velocity + current_acceleration * delay_time_sec;
-
-  const double time_to_stop = velocity_after_delay / std::abs(max_deceleration);
+  const double distance_in_delay = current_velocity * delay_time_sec;
   const double distance_after_delay =
-    velocity_after_delay * time_to_stop - 0.5 * abs(max_deceleration) * time_to_stop * time_to_stop;
+    (current_velocity * current_velocity) / (2.0 * max_deceleration);
   const double brake_distance = distance_in_delay + distance_after_delay;
 
   return brake_distance > distance_to_obstacle;

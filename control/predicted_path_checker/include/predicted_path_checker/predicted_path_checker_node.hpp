@@ -15,7 +15,6 @@
 #ifndef PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_
 #define PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_
 
-#include <component_interface_utils/rclcpp.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <motion_utils/trajectory/tmp_conversion.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
@@ -33,8 +32,6 @@
 #include <vehicle_info_util/vehicle_info.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include "geometry_msgs/msg/accel_stamped.hpp"
-#include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -98,8 +95,6 @@ private:
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
     sub_predicted_trajectory_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
-  rclcpp::Subscription<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr sub_accel_;
-
   // Service
 
   // Data Buffer
@@ -108,7 +103,6 @@ private:
   sensor_msgs::msg::PointCloud2::SharedPtr obstacle_pointcloud_{nullptr};
   autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr reference_trajectory_;
   autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr predicted_trajectory_;
-  geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr current_accel_ptr;
 
   // Core
   std::unique_ptr<collision_checker::CollisionChecker> collision_checker_;
@@ -125,8 +119,6 @@ private:
   void onReferenceTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr msg);
   void onPredictedTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr msg);
   void onOdom(const nav_msgs::msg::Odometry::SharedPtr msg);
-  void onAccel(const geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr msg);
-
   // Publisher
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr virtual_wall_publisher_;
   std::shared_ptr<tier4_autoware_utils::ProcessingTimePublisher> time_publisher_;
@@ -145,7 +137,7 @@ private:
   void publishVirtualWall(boost::optional<collision_checker::Output> & output);
   TrajectoryPoints trimTrajectoryFromSelfPose(
     const TrajectoryPoints & input, const Pose & self_pose);
-  void sendRequest(bool make_stop_vehicle);
+  // void sendRequest(bool make_stop_vehicle);
 
   // Parameter
   collision_checker::collisionCheckerParam collision_checker_param_;

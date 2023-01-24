@@ -81,7 +81,7 @@ std::pair<size_t, TrajectoryPoint> findStopPoint(
 
 bool isInBrakeDistance(
   const TrajectoryPoints & trajectory, const size_t stop_idx, const double current_velocity,
-  const double current_acceleration, const double max_deceleration, const double delay_time_sec);
+  const double max_deceleration, const double delay_time_sec);
 
 geometry_msgs::msg::Point pclPointToRosPoint(const pcl::PointXYZ & pcl_point);
 

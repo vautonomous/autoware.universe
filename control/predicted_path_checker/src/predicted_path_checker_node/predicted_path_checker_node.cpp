@@ -71,8 +71,6 @@ PredictedPathCheckerNode::PredictedPathCheckerNode(const rclcpp::NodeOptions & n
     std::bind(&PredictedPathCheckerNode::onPredictedTrajectory, this, _1));
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
     "input/odometry", 1, std::bind(&PredictedPathCheckerNode::onOdom, this, _1));
-  sub_accel_ = create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
-    "input/current_accel", rclcpp::QoS{1}, std::bind(&PredictedPathCheckerNode::onAccel, this, _1));
 
   // Publisher
   virtual_wall_publisher_ =
@@ -116,12 +114,6 @@ void PredictedPathCheckerNode::onPredictedTrajectory(
 void PredictedPathCheckerNode::onOdom(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
   current_twist_ = std::make_shared<geometry_msgs::msg::Twist>(msg->twist.twist);
-}
-
-void PredictedPathCheckerNode::onAccel(
-  const geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr msg)
-{
-  current_accel_ptr = msg;
 }
 
 void PredictedPathCheckerNode::initTimer(double period_s)
@@ -229,15 +221,15 @@ void PredictedPathCheckerNode::onTimer()
   updateState(collision_checker_output);
 
   // send pause request
-  if (current_state_ == State::PAUSE) {
-    if (current_pause_state_ == State::DRIVE) {
-      sendRequest(true);
-    }
-  } else if (current_state_ == State::DRIVE) {
-    if (current_pause_state_ != State::DRIVE && *is_start_requested_) {
-      sendRequest(false);
-    }
-  }
+  // if (current_state_ == State::PAUSE) {
+  //   if (current_pause_state_ == State::DRIVE) {
+  //     sendRequest(true);
+  //   }
+  // } else if (current_state_ == State::DRIVE) {
+  //   if (current_pause_state_ != State::DRIVE && *is_start_requested_) {
+  //     sendRequest(false);
+  //   }
+  // }
 
   publishVirtualWall(collision_checker_output);
 }
@@ -309,8 +301,7 @@ void PredictedPathCheckerNode::updateState(
 
   if (utils::isInBrakeDistance(
         output.get().output_trajectory, stop_index, current_twist_.get()->linear.x,
-        current_accel_ptr.get()->accel.accel.linear.x, node_param_.max_deceleration,
-        node_param_.delay_time)) {
+        node_param_.max_deceleration, node_param_.delay_time)) {
     current_state_ = State::EMERGENCY;
     updater_.force_update();
     return;

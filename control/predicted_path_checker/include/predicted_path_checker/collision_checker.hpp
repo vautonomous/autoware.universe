@@ -29,8 +29,6 @@
 #include <vehicle_info_util/vehicle_info.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include "geometry_msgs/msg/accel_stamped.hpp"
-#include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
