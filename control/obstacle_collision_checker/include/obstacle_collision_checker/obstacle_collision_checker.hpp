@@ -63,8 +63,6 @@ struct Output
   autoware_auto_planning_msgs::msg::Trajectory resampled_trajectory;
   std::vector<LinearRing2d> vehicle_footprints;
   std::vector<LinearRing2d> vehicle_passing_areas;
-
-  pcl::PointCloud<pcl::PointXYZ> debug_cloud;
 };
 
 class ObstacleCollisionChecker

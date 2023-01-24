@@ -25,20 +25,24 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <pcl_conversions/pcl_conversions.h>
 
 namespace
 {
-template <typename T>
-void update_param(
-  const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
+template <class T>
+bool update_param(
+  const std::vector<rclcpp::Parameter> & params, const std::string & name, T & value)
 {
-  auto it = std::find_if(
-    parameters.cbegin(), parameters.cend(),
-    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
-  if (it != parameters.cend()) {
-    value = it->template get_value<T>();
+  const auto itr = std::find_if(
+    params.cbegin(), params.cend(),
+    [&name](const rclcpp::Parameter & p) { return p.get_name() == name; });
+
+  // Not found
+  if (itr == params.cend()) {
+    return false;
   }
+
+  value = itr->template get_value<T>();
+  return true;
 }
 }  // namespace
 
@@ -59,6 +63,9 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
   param_.resample_interval = declare_parameter("resample_interval", 0.5);
   param_.search_radius = declare_parameter("search_radius", 5.0);
 
+  // Dynamic Reconfigure
+  set_param_res_ = this->add_on_set_parameters_callback(
+    std::bind(&ObstacleCollisionCheckerNode::paramCallback, this, _1));
 
   // Core
   obstacle_collision_checker_ = std::make_unique<ObstacleCollisionChecker>(*this);
@@ -83,7 +90,6 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
   // Publisher
   debug_publisher_ = std::make_shared<tier4_autoware_utils::DebugPublisher>(this, "debug/marker");
   time_publisher_ = std::make_shared<tier4_autoware_utils::ProcessingTimePublisher>(this);
-  cloud_publisher_ = create_publisher<sensor_msgs::msg::PointCloud2>("debug/pointcloud", 10);
 
   // Diagnostic Updater
   updater_.setHardwareID("obstacle_collision_checker");
@@ -181,7 +187,7 @@ bool ObstacleCollisionCheckerNode::isDataTimeout()
   const auto pose_time_diff = rclcpp::Time(current_pose_->header.stamp).seconds() - now.seconds();
   if (pose_time_diff > th_pose_timeout) {
     RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1000 /* ms */, "pose is timeout...");
+      this->get_logger(), *this->get_clock(), 5000 /* ms */, "pose is timeout...");
     return true;
   }
 
@@ -193,14 +199,13 @@ void ObstacleCollisionCheckerNode::onTimer()
   current_pose_ = self_pose_listener_->getCurrentPose();
   if (obstacle_pointcloud_) {
     const auto & header = obstacle_pointcloud_->header;
-
     try {
       obstacle_transform_ = transform_listener_->getTransform(
-              "map",header.frame_id,  header.stamp, rclcpp::Duration::from_seconds(0.01));
-
+        "map", header.frame_id, header.stamp, rclcpp::Duration::from_seconds(0.01));
     } catch (tf2::TransformException & ex) {
       RCLCPP_INFO(
-              this->get_logger(), "Could not transform map to %s: %s", header.frame_id.c_str(), ex.what());
+        this->get_logger(), "Could not transform map to %s: %s", header.frame_id.c_str(),
+        ex.what());
       return;
     }
   }
@@ -220,8 +225,6 @@ void ObstacleCollisionCheckerNode::onTimer()
   input_.predicted_trajectory = predicted_trajectory_;
   input_.current_twist = current_twist_;
 
-//  RCLCPP_INFO(
-//          this->get_logger(), "Coming here.");
   output_ = obstacle_collision_checker_->update(input_);
 
   updater_.force_update();
@@ -229,13 +232,41 @@ void ObstacleCollisionCheckerNode::onTimer()
   debug_publisher_->publish("marker_array", createMarkerArray());
 
   time_publisher_->publish(output_.processing_time_map);
-  sensor_msgs::msg::PointCloud2::SharedPtr ground_cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
-  pcl::toROSMsg(output_.debug_cloud, *ground_cloud_msg_ptr);
-  ground_cloud_msg_ptr->header.frame_id = "map";
-  ground_cloud_msg_ptr->header.stamp = this->now();
-  cloud_publisher_->publish(*ground_cloud_msg_ptr);
 }
 
+rcl_interfaces::msg::SetParametersResult ObstacleCollisionCheckerNode::paramCallback(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+
+  try {
+    // Node Parameter
+    {
+      auto & p = node_param_;
+
+      // Update params
+      update_param(parameters, "update_rate", p.update_rate);
+    }
+
+    auto & p = param_;
+
+    update_param(parameters, "delay_time", p.delay_time);
+    update_param(parameters, "footprint_margin", p.footprint_margin);
+    update_param(parameters, "max_deceleration", p.max_deceleration);
+    update_param(parameters, "resample_interval", p.resample_interval);
+    update_param(parameters, "search_radius", p.search_radius);
+
+    if (obstacle_collision_checker_) {
+      obstacle_collision_checker_->setParam(param_);
+    }
+  } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
+    result.successful = false;
+    result.reason = e.what();
+  }
+  return result;
+}
 
 void ObstacleCollisionCheckerNode::checkLaneDeparture(
   diagnostic_updater::DiagnosticStatusWrapper & stat)
