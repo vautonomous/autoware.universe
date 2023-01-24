@@ -336,6 +336,8 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     vehicle_param_.wheelbase = vehicle_info.wheel_base_m;
     vehicle_param_.rear_overhang = vehicle_info.rear_overhang_m;
     vehicle_param_.front_overhang = vehicle_info.front_overhang_m;
+    vehicle_param_.left_half_width = vehicle_info.wheel_tread_m / 2.0 + vehicle_info.left_overhang_m;
+    vehicle_param_.right_half_width = vehicle_info.wheel_tread_m / 2.0 + vehicle_info.right_overhang_m;
   }
 
   {  // option parameter

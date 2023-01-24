@@ -41,13 +41,14 @@ geometry_msgs::msg::Pose convertRefPointsToPose(const ReferencePoint & ref_point
 }
 
 std::tuple<Eigen::VectorXd, Eigen::VectorXd> extractBounds(
-  const std::vector<ReferencePoint> & ref_points, const size_t l_idx, const double offset)
+  const std::vector<ReferencePoint> & ref_points, const size_t l_idx,
+  const double upper_bound_offset, const double lower_bound_offset)
 {
   Eigen::VectorXd ub_vec(ref_points.size());
   Eigen::VectorXd lb_vec(ref_points.size());
   for (size_t i = 0; i < ref_points.size(); ++i) {
-    ub_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).upper_bound + offset;
-    lb_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).lower_bound - offset;
+    ub_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).upper_bound + upper_bound_offset;
+    lb_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).lower_bound - lower_bound_offset;
   }
   return {ub_vec, lb_vec};
 }
@@ -1040,9 +1041,15 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     const Eigen::VectorXd CW = C_sparse_mat * mpt_mat.Wex + C_vec;
 
     // calculate bounds
-    const double bounds_offset =
-      vehicle_param_.width / 2.0 - mpt_param_.vehicle_circle_radiuses.at(l_idx);
-    const auto & [part_ub, part_lb] = extractBounds(ref_points, l_idx, bounds_offset);
+
+    // left bound
+    const double upper_bound_offset =
+      vehicle_param_.left_half_width - mpt_param_.vehicle_circle_radiuses.at(l_idx);
+    // right bound
+    const double lower_bound_offset =
+      vehicle_param_.right_half_width - mpt_param_.vehicle_circle_radiuses.at(l_idx);
+    const auto & [part_ub, part_lb] =
+      extractBounds(ref_points, l_idx, upper_bound_offset, lower_bound_offset);
 
     // soft constraints
     if (mpt_param_.soft_constraint) {
