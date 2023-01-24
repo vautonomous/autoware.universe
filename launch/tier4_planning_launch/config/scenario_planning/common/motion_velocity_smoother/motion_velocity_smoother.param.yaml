@@ -2,7 +2,7 @@
   ros__parameters:
     # motion state constraints
     max_velocity: 8.34      # max velocity limit [m/s]
-    stop_decel: 2.0         # deceleration at a stop point[m/ss]
+    stop_decel: 0.0         # deceleration at a stop point[m/ss]
 
     # external velocity limit parameter
     margin_to_insert_external_velocity_limit: 0.3   #  margin distance to insert external velocity limit [m]
@@ -32,8 +32,8 @@
     # resampling parameters for optimization
     max_trajectory_length: 200.0        # max trajectory length for resampling [m]
     min_trajectory_length: 150.0        # min trajectory length for resampling [m]
-    resample_time: 5.0                  # resample total time for dense sampling [s]
-    dense_resample_dt: 0.1              # resample time interval for dense sampling [s]
+    resample_time: 2.0                  # resample total time for dense sampling [s]
+    dense_resample_dt: 0.2              # resample time interval for dense sampling [s]
     dense_min_interval_distance: 0.1    # minimum points-interval length for dense sampling [m]
     sparse_resample_dt: 0.5             # resample time interval for sparse sampling [s]
     sparse_min_interval_distance: 4.0   # minimum points-interval length for sparse sampling [m]
