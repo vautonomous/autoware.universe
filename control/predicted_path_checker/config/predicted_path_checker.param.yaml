@@ -1,0 +1,16 @@
+/**:
+  ros__parameters:
+    # Node
+    update_rate: 10.0
+    max_deceleration: 1.5
+    delay_time: 0.17
+    ego_nearest_dist_threshold: 3.0 # [m]
+    ego_nearest_yaw_threshold: 1.046 # [rad] = 60 [deg]
+
+    collision_checker_params:
+      search_radius: 6.0
+      stop_margin: 0.7
+      width_margin: 0.1
+      longitudinal_margin: 0.15
+      stop_search_radius: 4.0
+      resample_interval: 0.3
