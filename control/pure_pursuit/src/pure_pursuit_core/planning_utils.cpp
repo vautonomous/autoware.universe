@@ -36,6 +36,7 @@ double calcArcLengthFromWayPoint(
   }
   return length;
 }
+
 double calcCurvature(
   const geometry_msgs::msg::Point & target, const geometry_msgs::msg::Pose & current_pose)
 {
