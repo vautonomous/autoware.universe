@@ -155,7 +155,7 @@ def launch_setup(context, *args, **kwargs):
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
-    # obstacle collusion checker
+    # obstacle collision checker
     obstacle_collision_checker_component = ComposableNode(
         package="obstacle_collision_checker",
         plugin="obstacle_collision_checker::ObstacleCollisionCheckerNode",
@@ -164,7 +164,10 @@ def launch_setup(context, *args, **kwargs):
             ("input/lanelet_map_bin", "/map/vector_map"),
             ("input/obstacle_pointcloud", "/perception/obstacle_segmentation/pointcloud"),
             ("input/reference_trajectory", "/planning/scenario_planning/trajectory"),
-            ("input/predicted_trajectory", "/control/trajectory_follower/lateral/predicted_trajectory"),
+            (
+                "input/predicted_trajectory",
+                "/control/trajectory_follower/lateral/predicted_trajectory",
+            ),
             ("input/odometry", "/localization/kinematic_state"),
         ],
         parameters=[
