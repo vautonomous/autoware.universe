@@ -143,6 +143,9 @@ void EKFLocalizer::updatePredictFrequency()
 void EKFLocalizer::timerCallback()
 {
   if (!is_initialized_) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), std::chrono::milliseconds(2000).count(),
+      "EKFLocalizer is not initialized yo!");
     return;
   }
 
@@ -302,6 +305,10 @@ bool EKFLocalizer::getTransformFromTF(
 void EKFLocalizer::callbackInitialPose(
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr initialpose)
 {
+  RCLCPP_WARN_THROTTLE(
+    get_logger(), *get_clock(), std::chrono::milliseconds(2000).count(),
+    "callbackInitialPose is called yo!");
+
   geometry_msgs::msg::TransformStamped transform;
   if (!getTransformFromTF(pose_frame_id_, initialpose->header.frame_id, transform)) {
     RCLCPP_ERROR(

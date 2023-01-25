@@ -84,7 +84,7 @@ PoseInitializer::PoseInitializer()
       std::bind(&PoseInitializer::callbackPoseInitializationRequest, this, std::placeholders::_1));
 
   initial_pose_pub_ =
-    this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose3d", 10);
+    this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose3d", rclcpp::QoS{1}.transient_local());
 
   initialize_pose_service_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -213,15 +213,28 @@ bool PoseInitializer::callAlignServiceAndPublishResult(
   const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr input_pose_msg)
 {
   if (request_id_ != response_id_) {
-    RCLCPP_ERROR(get_logger(), "Did not receive response for previous NDT Align Server call");
-    return false;
+    RCLCPP_WARN(get_logger(), "Did not receive response for previous NDT Align Server call");
+//    return false;
   }
   auto req = std::make_shared<tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request>();
   req->pose_with_covariance = *input_pose_msg;
   req->seq = ++request_id_;
 
   RCLCPP_INFO(get_logger(), "call NDT Align Server");
-  auto result = ndt_client_->async_send_request(req).get();
+  auto result_future = ndt_client_->async_send_request(req);
+
+  using namespace std::chrono_literals;
+
+  if (result_future.wait_for(10s) != std::future_status::ready) {  // More time doesn't help
+    RCLCPP_ERROR_STREAM(
+      get_logger(), "Waiting result failed for server " << ndt_client_->get_service_name());
+    return false;
+  } else {
+    RCLCPP_INFO_STREAM(
+      get_logger(), "Waiting succeeded for server " << ndt_client_->get_service_name());
+  }
+
+  auto result = result_future.get();
 
   if (!result->success) {
     RCLCPP_INFO(get_logger(), "failed NDT Align Server");
