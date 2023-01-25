@@ -156,6 +156,7 @@ private:
   double update_period_;
   bool use_emergency_handling_;
   bool use_external_emergency_stop_;
+  bool external_stop_{false};
   double system_emergency_heartbeat_timeout_;
   double external_emergency_stop_heartbeat_timeout_;
   double stop_hold_acceleration_;
@@ -164,7 +165,12 @@ private:
   // Service
   rclcpp::Service<tier4_external_api_msgs::srv::Engage>::SharedPtr srv_engage_;
   rclcpp::Service<tier4_external_api_msgs::srv::SetEmergency>::SharedPtr srv_external_emergency_;
+  rclcpp::Service<tier4_external_api_msgs::srv::Engage>::SharedPtr
+    srv_external_stop_;  // for external stop, used by predicted_path_checker
   rclcpp::Publisher<Emergency>::SharedPtr pub_external_emergency_;
+  void onExternalStopService(
+    const tier4_external_api_msgs::srv::Engage::Request::SharedPtr request,
+    const tier4_external_api_msgs::srv::Engage::Response::SharedPtr response);
   void onEngageService(
     const tier4_external_api_msgs::srv::Engage::Request::SharedPtr request,
     const tier4_external_api_msgs::srv::Engage::Response::SharedPtr response);

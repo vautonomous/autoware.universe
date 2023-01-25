@@ -168,6 +168,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   // Service
   srv_engage_ = create_service<tier4_external_api_msgs::srv::Engage>(
     "~/service/engage", std::bind(&VehicleCmdGate::onEngageService, this, _1, _2));
+  srv_external_stop_ = create_service<tier4_external_api_msgs::srv::Engage>(
+    "~/service/external_stop", std::bind(&VehicleCmdGate::onExternalStopService, this, _1, _2));
   srv_external_emergency_ = create_service<tier4_external_api_msgs::srv::SetEmergency>(
     "~/service/external_emergency",
     std::bind(&VehicleCmdGate::onExternalEmergencyStopService, this, _1, _2, _3));
@@ -417,7 +419,7 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
   }
 
   // Check engage
-  if (!is_engaged_ || !start_request_->isAccepted()) {
+  if (!is_engaged_ || !start_request_->isAccepted() || external_stop_) {
     filtered_commands.control = createStopControlCmd();
   }
 
@@ -589,6 +591,14 @@ void VehicleCmdGate::onEngageService(
   const tier4_external_api_msgs::srv::Engage::Response::SharedPtr response)
 {
   is_engaged_ = request->engage;
+  response->status = tier4_api_utils::response_success();
+}
+
+void VehicleCmdGate::onExternalStopService(
+  const tier4_external_api_msgs::srv::Engage::Request::SharedPtr request,
+  const tier4_external_api_msgs::srv::Engage::Response::SharedPtr response)
+{
+  external_stop_ = request->engage;
   response->status = tier4_api_utils::response_success();
 }
 
