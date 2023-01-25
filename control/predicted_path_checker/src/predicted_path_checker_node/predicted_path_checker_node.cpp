@@ -339,8 +339,6 @@ void PredictedPathCheckerNode::sendRequest(bool make_stop_vehicle)
 
   auto req = std::make_shared<tier4_external_api_msgs::srv::Engage::Request>();
   req->engage = make_stop_vehicle;
-  RCLCPP_INFO(this->get_logger(), "client request external stop");
-
   cli_external_stop_->async_send_request(
     req,
     []([[maybe_unused]] rclcpp::Client<tier4_external_api_msgs::srv::Engage>::SharedFuture result) {
