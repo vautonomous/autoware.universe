@@ -206,6 +206,7 @@ def launch_setup(context, *args, **kwargs):
             ("output/external_emergency", "/api/autoware/get/emergency"),
             ("output/operation_mode", "/control/vehicle_cmd_gate/operation_mode"),
             ("~/service/engage", "/api/autoware/set/engage"),
+            ("~/service/external_stop", "/api/autoware/set/external_stop"),
             ("~/service/external_emergency", "/api/autoware/set/emergency"),
             # TODO(Takagi, Isamu): deprecated
             ("input/engage", "/autoware/engage"),

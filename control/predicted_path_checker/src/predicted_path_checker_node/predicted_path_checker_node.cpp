@@ -77,6 +77,10 @@ PredictedPathCheckerNode::PredictedPathCheckerNode(const rclcpp::NodeOptions & n
     this->create_publisher<visualization_msgs::msg::MarkerArray>("~/virtual_wall", 1);
   time_publisher_ = std::make_shared<tier4_autoware_utils::ProcessingTimePublisher>(this);
 
+  // Client
+  cli_external_stop_ = this->create_client<tier4_external_api_msgs::srv::Engage>(
+    "/api/autoware/set/external_stop", rmw_qos_profile_services_default);
+
   // Core
   collision_checker_ = std::make_unique<collision_checker::CollisionChecker>(*this);
   collision_checker_->setParam(collision_checker_param_);
@@ -159,12 +163,12 @@ bool PredictedPathCheckerNode::isDataReady()
     return false;
   }
 
-  // if (!current_pause_state_ || !is_start_requested_ || !cli_set_pause_->service_is_ready()) {
-  //   RCLCPP_INFO_THROTTLE(
-  //     this->get_logger(), *this->get_clock(), 5000 /* ms */,
-  //     "waiting for pause interface service...");
-  //   return false;
-  // }
+  if (!cli_external_stop_->service_is_ready()) {
+    RCLCPP_INFO_THROTTLE(
+      this->get_logger(), *this->get_clock(), 5000 /* ms */,
+      "waiting for external_stop service...");
+    return false;
+  }
 
   return true;
 }
@@ -220,16 +224,12 @@ void PredictedPathCheckerNode::onTimer()
 
   updateState(collision_checker_output);
 
-  // send pause request
-  // if (current_state_ == State::PAUSE) {
-  //   if (current_pause_state_ == State::DRIVE) {
-  //     sendRequest(true);
-  //   }
-  // } else if (current_state_ == State::DRIVE) {
-  //   if (current_pause_state_ != State::DRIVE && *is_start_requested_) {
-  //     sendRequest(false);
-  //   }
-  // }
+  // send stop request
+  if (current_state_ == State::DRIVE) {
+    sendRequest(false);
+  } else {
+    sendRequest(true);
+  }
 
   publishVirtualWall(collision_checker_output);
 }
@@ -333,6 +333,19 @@ void PredictedPathCheckerNode::publishVirtualWall(
   virtual_wall_publisher_->publish(msg);
 }
 
+void PredictedPathCheckerNode::sendRequest(bool make_stop_vehicle)
+{
+  // external stop request
+
+  auto req = std::make_shared<tier4_external_api_msgs::srv::Engage::Request>();
+  req->engage = make_stop_vehicle;
+  RCLCPP_INFO(this->get_logger(), "client request external stop");
+
+  cli_external_stop_->async_send_request(
+    req,
+    []([[maybe_unused]] rclcpp::Client<tier4_external_api_msgs::srv::Engage>::SharedFuture result) {
+    });
+}
 }  // namespace predicted_path_checker
 
 #include <rclcpp_components/register_node_macro.hpp>

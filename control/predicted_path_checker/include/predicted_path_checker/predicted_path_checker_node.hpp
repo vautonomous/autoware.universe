@@ -29,6 +29,8 @@
 #include <tier4_autoware_utils/ros/processing_time_publisher.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
+#include <tier4_external_api_msgs/srv/engage.hpp>
+
 #include <vehicle_info_util/vehicle_info.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
@@ -96,6 +98,7 @@ private:
     sub_predicted_trajectory_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   // Service
+  rclcpp::Client<tier4_external_api_msgs::srv::Engage>::SharedPtr cli_external_stop_;
 
   // Data Buffer
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
@@ -137,7 +140,7 @@ private:
   void publishVirtualWall(boost::optional<collision_checker::Output> & output);
   TrajectoryPoints trimTrajectoryFromSelfPose(
     const TrajectoryPoints & input, const Pose & self_pose);
-  // void sendRequest(bool make_stop_vehicle);
+  void sendRequest(bool make_stop_vehicle);
 
   // Parameter
   collision_checker::collisionCheckerParam collision_checker_param_;
