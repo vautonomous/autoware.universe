@@ -101,8 +101,8 @@ private:
   std::shared_ptr<Tn::TrtCommon> trt_;
   image_transport::Publisher image_pub_;
   std::vector<std::string> labels_;
-  std::vector<float> mean_{0.242, 0.193, 0.201};
-  std::vector<float> std_{1.0, 1.0, 1.0};
+  std::vector<float> mean_{0.2582, 0.2361, 0.2373};
+  std::vector<float> std_{0.3041, 0.2850, 0.2797};
   int input_c_;
   int input_h_;
   int input_w_;

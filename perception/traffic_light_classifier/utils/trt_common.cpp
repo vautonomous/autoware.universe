@@ -40,8 +40,8 @@ void check_error(const ::cudaError_t e, decltype(__FILE__) f, decltype(__LINE__)
 TrtCommon::TrtCommon(std::string model_path, std::string precision)
 : model_file_path_(model_path),
   precision_(precision),
-  input_name_("input_0"),
-  output_name_("output_0"),
+  input_name_("input"),
+  output_name_("output"),
   is_initialized_(false)
 {
   runtime_ = UniquePtr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(logger_));
