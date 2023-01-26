@@ -1392,8 +1392,8 @@ void MPTOptimizer::calcBounds(
     const double min_curvature = 0.03;  // [1/m]
     const double max_curvature = 0.20;  // [1/m]
 
-    const double min_clearance = 0.40;  // [m]
-    const double max_clearance = 1.00;  // [m]
+    const double min_clearance = 0.6;  // [m]
+    const double max_clearance = 1.0;  // [m]
 
     p1.x = min_curvature;
     p2.x = max_curvature;

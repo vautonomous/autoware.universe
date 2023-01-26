@@ -60,7 +60,7 @@
     keep_steer_control_until_converged: true
     new_traj_duration_time: 1.0
     new_traj_end_dist: 0.1
-    ld_velocity_ratio: 1.7
+    ld_velocity_ratio: 2.4
     ld_lateral_error_ratio: 3.6
     ld_curvature_ratio: 120.0
     long_ld_lateral_error_threshold: 0.5
