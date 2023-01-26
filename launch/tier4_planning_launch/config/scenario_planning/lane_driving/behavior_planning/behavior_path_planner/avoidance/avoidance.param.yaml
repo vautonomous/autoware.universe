@@ -7,15 +7,15 @@
       detection_area_right_expand_dist: 1.0
       detection_area_left_expand_dist: 1.0
 
-      enable_avoidance_over_same_direction: false
+      enable_avoidance_over_same_direction: true
       enable_avoidance_over_opposite_direction: false
 
       threshold_distance_object_is_on_center: 1.0 # [m]
       threshold_speed_object_is_stopped: 0.5      # [m/s]
       object_check_forward_distance: 50.0        # [m]
       object_check_backward_distance: 2.0         # [m]
-      lateral_collision_margin: 0.5               # [m]
-      lateral_collision_safety_buffer: 0.5        # [m]
+      lateral_collision_margin: 0.25               # [m]
+      lateral_collision_safety_buffer: 0.30        # [m]
 
       prepare_time: 2.0                           # [s]
       min_prepare_distance: 1.0                   # [m]
