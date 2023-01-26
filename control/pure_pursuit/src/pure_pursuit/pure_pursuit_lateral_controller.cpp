@@ -298,7 +298,7 @@ void PurePursuitLateralController::averageFilterTrajectory(
 boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTrajectory()
 {
   const auto closest_idx_result =
-    motion_utils::findNearestIndex(*output_tp_array_, current_pose_->pose, 3.0, M_PI_4);
+    motion_utils::findNearestIndex(*output_tp_array_, current_pose_->pose, 5.0, M_PI_4);
 
   if (!closest_idx_result) {
     return boost::none;
@@ -465,7 +465,7 @@ boost::optional<PpOutput> PurePursuitLateralController::calcTargetCurvature(
   // Calculate target point for velocity/acceleration
 
   const auto closest_idx_result =
-    motion_utils::findNearestIndex(*output_tp_array_, pose, 3.0, M_PI_4);
+    motion_utils::findNearestIndex(*output_tp_array_, pose, 5.0, M_PI_4);
   if (!closest_idx_result) {
     RCLCPP_ERROR(node_->get_logger(), "cannot find closest waypoint");
     return {};
