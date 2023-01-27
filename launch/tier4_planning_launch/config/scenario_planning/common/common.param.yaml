@@ -11,5 +11,5 @@
     limit:
       min_acc: -1.5          # min deceleration limit [m/ss]
       max_acc: 0.9           # max acceleration limit [m/ss]
-      min_jerk: -0.9         # min jerk limit [m/sss]
+      min_jerk: -2.0         # min jerk limit [m/sss]
       max_jerk: 0.6          # max jerk limit [m/sss]
