@@ -34,7 +34,7 @@
       # params for velocity
       target_velocity:
         max_slow_down_velocity: 4.0         # max slow down velocity (use this param if consider_constraints is False)[m/s]
-        min_slow_down_velocity: 2.2         # min slow down velocity (use this param if consider_constraints is False)[m/s]
+        min_slow_down_velocity: 2.8         # min slow down velocity (use this param if consider_constraints is False)[m/s]
         slow_down_velocity: 2.5             # target slow down velocity (use this param if consider_constraints is True)[m/s]
 
       # params for deceleration constraints (use this param if consider_constraints is True)
@@ -44,6 +44,6 @@
         jerk_start: -0.1                     # init jerk used for deceleration planning [m/sss]
 
       # others
-      consider_constraints: True                 # set "True", if no decel plan found under jerk/dec constrains, relax target slow down vel [-]
+      consider_constraints: false                 # set "True", if no decel plan found under jerk/dec constrains, relax target slow down vel [-]
       velocity_threshold_decel_complete: 0.2      # use for judge whether the ego velocity converges the target slow down velocity [m/s]
       acceleration_threshold_decel_complete: 0.1  # use for judge whether the ego velocity converges the target slow down velocity [m/ss]
