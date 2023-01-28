@@ -13,6 +13,7 @@ ament_auto_add_library(predicted_path_checker SHARED
   src/predicted_path_checker_node/predicted_path_checker_node.cpp
   src/predicted_path_checker_node/collision_checker.cpp
   src/predicted_path_checker_node/utils.cpp
+  src/predicted_path_checker_node/debug_marker.cpp
 
 )
 

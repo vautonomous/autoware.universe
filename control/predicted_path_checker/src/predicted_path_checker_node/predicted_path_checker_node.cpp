@@ -319,7 +319,7 @@ void PredictedPathCheckerNode::publishVirtualWall(
   visualization_msgs::msg::MarkerArray msg;
   rclcpp::Time current_time = this->now();
 
-  if (current_state_ == State::DRIVE) {
+  if (!output) {
     const auto markers = motion_utils::createDeletedStopVirtualWallMarker(current_time, 0);
     tier4_autoware_utils::appendMarkerArray(markers, &msg);
   } else {
@@ -327,7 +327,7 @@ void PredictedPathCheckerNode::publishVirtualWall(
       output.get().output_trajectory.at(output.get().stop_index).pose,
       vehicle_info_.max_longitudinal_offset_m, 0.0, 0.0);
     const auto markers =
-      motion_utils::createStopVirtualWallMarker(p, "obstacle on the path", current_time, 0);
+      motion_utils::createStopVirtualWallMarker(p, "obstacle on predicted path", current_time, 0);
     tier4_autoware_utils::appendMarkerArray(markers, &msg);
   }
   virtual_wall_publisher_->publish(msg);

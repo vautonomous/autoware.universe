@@ -20,6 +20,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <predicted_path_checker/debug_marker.hpp>
 #include <predicted_path_checker/utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
@@ -93,6 +94,7 @@ public:
 
 private:
   // Functions
+  std::shared_ptr<motion_planning::ObstacleStopPlannerDebugNode> debug_ptr_;
   void filterPointCloud(const sensor_msgs::msg::PointCloud2 & input);
 
   bool searchPointCloudNearPredictedTrajectory(

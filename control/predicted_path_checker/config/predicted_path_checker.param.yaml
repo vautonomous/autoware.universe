@@ -12,5 +12,5 @@
       stop_margin: 0.7
       width_margin: 0.1
       longitudinal_margin: 0.15
-      stop_search_radius: 4.0
-      resample_interval: 0.3
+      stop_search_radius: 7.0
+      resample_interval: 1.0
