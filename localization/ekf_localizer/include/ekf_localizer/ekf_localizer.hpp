@@ -210,6 +210,8 @@ private:
   int pose_smoothing_steps_;
   int twist_smoothing_steps_;
 
+  TwistInfo twist_info_in_last_;
+
   /**
    * @brief computes update & prediction of EKF for each ekf_dt_[s] time
    */

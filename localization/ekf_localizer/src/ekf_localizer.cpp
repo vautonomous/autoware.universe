@@ -188,6 +188,7 @@ void EKFLocalizer::timerCallback()
     int twist_info_queue_size = static_cast<int>(current_twist_info_queue_.size());
     for (int i = 0; i < twist_info_queue_size; ++i) {
       TwistInfo twist_info = current_twist_info_queue_.front();
+      twist_info_in_last_ = twist_info;
       current_twist_info_queue_.pop();
       measurementUpdateTwist(*twist_info.twist);
       ++twist_info.counter;
@@ -237,8 +238,8 @@ void EKFLocalizer::setCurrentResult()
 
   current_ekf_twist_.header.frame_id = "base_link";
   current_ekf_twist_.header.stamp = this->now();
-  current_ekf_twist_.twist.linear.x = ekf_.getXelement(IDX::VX);
-  current_ekf_twist_.twist.angular.z = ekf_.getXelement(IDX::WZ);
+  current_ekf_twist_.twist.linear.x = twist_info_in_last_.twist->twist.twist.linear.x;
+  current_ekf_twist_.twist.angular.z = twist_info_in_last_.twist->twist.twist.angular.z;
 }
 
 /*
