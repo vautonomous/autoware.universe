@@ -7,7 +7,7 @@
       detection_area_right_expand_dist: 1.0
       detection_area_left_expand_dist: 1.0
 
-      enable_avoidance_over_same_direction: false
+      enable_avoidance_over_same_direction: true
       enable_avoidance_over_opposite_direction: false
 
       threshold_distance_object_is_on_center: 1.0 # [m]
