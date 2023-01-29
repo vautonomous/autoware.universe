@@ -4,8 +4,8 @@
     avoidance:
       resample_interval_for_planning: 0.3
       resample_interval_for_output: 4.0
-      detection_area_right_expand_dist: 1.0
-      detection_area_left_expand_dist: 1.0
+      detection_area_right_expand_dist: 0.1
+      detection_area_left_expand_dist: 0.1
 
       enable_avoidance_over_same_direction: true
       enable_avoidance_over_opposite_direction: false
@@ -21,22 +21,22 @@
       min_prepare_distance: 1.0                   # [m]
       min_avoidance_distance: 10.0                # [m]
 
-      min_nominal_avoidance_speed: 1.5  # [m/s]
-      min_sharp_avoidance_speed: 1.0    # [m/s]
+      min_nominal_avoidance_speed: 1.0  # [m/s]
+      min_sharp_avoidance_speed: 0.6    # [m/s]
 
       road_shoulder_safety_margin: 0.01 # [m]
 
-      max_right_shift_length: 2.0 # [m]
-      max_left_shift_length: 2.0 # [m]
+      max_right_shift_length: 3.0 # [m]
+      max_left_shift_length: 3.0 # [m]
 
-      nominal_lateral_jerk: 0.1   # [m/s3]
-      max_lateral_jerk: 0.4       # [m/s3]
+      nominal_lateral_jerk: 0.01   # [m/s3]
+      max_lateral_jerk: 0.05       # [m/s3]
 
       object_last_seen_threshold: 2.0   # [s]
 
       # For prevention of large acceleration while avoidance
       min_avoidance_speed_for_acc_prevention: 3.0  # [m/s]
-      max_avoidance_acceleration: 0.5  # [m/ss]
+      max_avoidance_acceleration: 0.1  # [m/ss]
 
       # for debug
       publish_debug_marker: true
