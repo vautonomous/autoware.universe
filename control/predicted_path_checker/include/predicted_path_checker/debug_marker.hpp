@@ -31,106 +31,124 @@
 #include <memory>
 #include <string>
 #include <vector>
+
 #define EIGEN_MPL2_ONLY
+
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
-namespace motion_planning
-{
-using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 
-enum class PolygonType : int8_t { Vehicle = 0, Collision, SlowDownRange, SlowDown };
+namespace motion_planning {
+    using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 
-enum class PointType : int8_t { Stop = 0, SlowDown };
+    enum class PolygonType : int8_t {
+        Vehicle = 0, Collision, SlowDownRange, SlowDown
+    };
 
-enum class PoseType : int8_t { Stop = 0, TargetStop, SlowDownStart, SlowDownEnd };
+    enum class PointType : int8_t {
+        Stop = 0, SlowDown
+    };
 
-class DebugValues
-{
-public:
-  enum class TYPE {
-    CURRENT_VEL = 0,
-    CURRENT_ACC = 1,
-    CURRENT_FORWARD_MARGIN = 2,
-    SLOWDOWN_OBSTACLE_DISTANCE = 3,
-    COLLISION_OBSTACLE_DISTANCE = 4,
-    FLAG_FIND_COLLISION_OBSTACLE = 5,
-    FLAG_FIND_SLOW_DOWN_OBSTACLE = 6,
-    FLAG_ADAPTIVE_CRUISE = 7,
-    FLAG_EXTERNAL = 8,
-    SIZE
-  };
+    enum class PoseType : int8_t {
+        Stop = 0, TargetStop, SlowDownStart, SlowDownEnd
+    };
 
-  /**
-   * @brief get the index corresponding to the given value TYPE
-   * @param [in] type the TYPE enum for which to get the index
-   * @return index of the type
-   */
-  int getValuesIdx(const TYPE type) const { return static_cast<int>(type); }
-  /**
-   * @brief get all the debug values as an std::array
-   * @return array of all debug values
-   */
-  std::array<double, static_cast<int>(TYPE::SIZE)> getValues() const { return values_; }
-  /**
-   * @brief set the given type to the given value
-   * @param [in] type TYPE of the value
-   * @param [in] value value to set
-   */
-  void setValues(const TYPE type, const double val) { values_.at(static_cast<int>(type)) = val; }
-  /**
-   * @brief set the given type to the given value
-   * @param [in] type index of the type
-   * @param [in] value value to set
-   */
-  void setValues(const int type, const double val) { values_.at(type) = val; }
+    class DebugValues {
+    public:
+        enum class TYPE {
+            CURRENT_VEL = 0,
+            CURRENT_ACC = 1,
+            CURRENT_FORWARD_MARGIN = 2,
+            SLOWDOWN_OBSTACLE_DISTANCE = 3,
+            COLLISION_OBSTACLE_DISTANCE = 4,
+            FLAG_FIND_COLLISION_OBSTACLE = 5,
+            FLAG_FIND_SLOW_DOWN_OBSTACLE = 6,
+            FLAG_ADAPTIVE_CRUISE = 7,
+            FLAG_EXTERNAL = 8,
+            SIZE
+        };
 
-private:
-  static constexpr int num_debug_values_ = static_cast<int>(TYPE::SIZE);
-  std::array<double, static_cast<int>(TYPE::SIZE)> values_;
-};
+        /**
+         * @brief get the index corresponding to the given value TYPE
+         * @param [in] type the TYPE enum for which to get the index
+         * @return index of the type
+         */
+        int getValuesIdx(const TYPE type) const { return static_cast<int>(type); }
 
-class ObstacleStopPlannerDebugNode
-{
-public:
-  explicit ObstacleStopPlannerDebugNode(rclcpp::Node & node, const double base_link2front);
-  ~ObstacleStopPlannerDebugNode() {}
-  bool pushPolygon(
-    const std::vector<cv::Point2d> & polygon, const double z, const PolygonType & type);
-  bool pushPolygon(const std::vector<Eigen::Vector3d> & polygon, const PolygonType & type);
-  bool pushPose(const geometry_msgs::msg::Pose & pose, const PoseType & type);
-  bool pushObstaclePoint(const geometry_msgs::msg::Point & obstacle_point, const PointType & type);
-  bool pushObstaclePoint(const pcl::PointXYZ & obstacle_point, const PointType & type);
-  visualization_msgs::msg::MarkerArray makeVirtualWallMarker();
-  visualization_msgs::msg::MarkerArray makeVisualizationMarker();
-  tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray();
+        /**
+         * @brief get all the debug values as an std::array
+         * @return array of all debug values
+         */
+        std::array<double, static_cast<int>(TYPE::SIZE)> getValues() const { return values_; }
 
-  void setDebugValues(const DebugValues::TYPE type, const double val)
-  {
-    debug_values_.setValues(type, val);
-  }
-  void publish();
+        /**
+         * @brief set the given type to the given value
+         * @param [in] type TYPE of the value
+         * @param [in] value value to set
+         */
+        void setValues(const TYPE type, const double val) { values_.at(static_cast<int>(type)) = val; }
 
-private:
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr virtual_wall_pub_;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
-  rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr stop_reason_pub_;
-  rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr pub_debug_values_;
-  rclcpp::Node node_;
-  double base_link2front_;
+        /**
+         * @brief set the given type to the given value
+         * @param [in] type index of the type
+         * @param [in] value value to set
+         */
+        void setValues(const int type, const double val) { values_.at(type) = val; }
 
-  std::shared_ptr<geometry_msgs::msg::Pose> stop_pose_ptr_;
-  std::shared_ptr<geometry_msgs::msg::Pose> target_stop_pose_ptr_;
-  std::shared_ptr<geometry_msgs::msg::Pose> slow_down_start_pose_ptr_;
-  std::shared_ptr<geometry_msgs::msg::Pose> slow_down_end_pose_ptr_;
-  std::shared_ptr<geometry_msgs::msg::Point> stop_obstacle_point_ptr_;
-  std::shared_ptr<geometry_msgs::msg::Point> slow_down_obstacle_point_ptr_;
-  std::vector<std::vector<Eigen::Vector3d>> vehicle_polygons_;
-  std::vector<std::vector<Eigen::Vector3d>> slow_down_range_polygons_;
-  std::vector<std::vector<Eigen::Vector3d>> collision_polygons_;
-  std::vector<std::vector<Eigen::Vector3d>> slow_down_polygons_;
+    private:
+        static constexpr int num_debug_values_ = static_cast<int>(TYPE::SIZE);
+        std::array<double, static_cast<int>(TYPE::SIZE)> values_;
+    };
 
-  DebugValues debug_values_;
-};
+    class ObstacleStopPlannerDebugNode {
+    public:
+        explicit ObstacleStopPlannerDebugNode(rclcpp::Node *node, const double base_link2front);
+
+        ~ObstacleStopPlannerDebugNode() {}
+
+        bool pushPolygon(
+                const std::vector<cv::Point2d> &polygon, const double z, const PolygonType &type);
+
+        bool pushPolygon(const std::vector<Eigen::Vector3d> &polygon, const PolygonType &type);
+
+        bool pushPose(const geometry_msgs::msg::Pose &pose, const PoseType &type);
+
+        bool pushObstaclePoint(const geometry_msgs::msg::Point &obstacle_point, const PointType &type);
+
+        bool pushObstaclePoint(const pcl::PointXYZ &obstacle_point, const PointType &type);
+
+        visualization_msgs::msg::MarkerArray makeVirtualWallMarker();
+
+        visualization_msgs::msg::MarkerArray makeVisualizationMarker();
+
+        tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray();
+
+        void setDebugValues(const DebugValues::TYPE type, const double val) {
+            debug_values_.setValues(type, val);
+        }
+
+        void publish();
+
+    private:
+        rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr virtual_wall_pub_;
+        rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
+        rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr stop_reason_pub_;
+        rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr pub_debug_values_;
+        rclcpp::Node *node_;
+        double base_link2front_;
+
+        std::shared_ptr<geometry_msgs::msg::Pose> stop_pose_ptr_;
+        std::shared_ptr<geometry_msgs::msg::Pose> target_stop_pose_ptr_;
+        std::shared_ptr<geometry_msgs::msg::Pose> slow_down_start_pose_ptr_;
+        std::shared_ptr<geometry_msgs::msg::Pose> slow_down_end_pose_ptr_;
+        std::shared_ptr<geometry_msgs::msg::Point> stop_obstacle_point_ptr_;
+        std::shared_ptr<geometry_msgs::msg::Point> slow_down_obstacle_point_ptr_;
+        std::vector<std::vector<Eigen::Vector3d>> vehicle_polygons_;
+        std::vector<std::vector<Eigen::Vector3d>> slow_down_range_polygons_;
+        std::vector<std::vector<Eigen::Vector3d>> collision_polygons_;
+        std::vector<std::vector<Eigen::Vector3d>> slow_down_polygons_;
+
+        DebugValues debug_values_;
+    };
 
 }  // namespace motion_planning
 

@@ -41,17 +41,17 @@ using tier4_autoware_utils::createPoint;
 namespace motion_planning
 {
 ObstacleStopPlannerDebugNode::ObstacleStopPlannerDebugNode(
-  rclcpp::Node & node, const double base_link2front)
+  rclcpp::Node * node, const double base_link2front)
 : node_(node), base_link2front_(base_link2front)
 {
   virtual_wall_pub_ =
-    node_.create_publisher<visualization_msgs::msg::MarkerArray>("~/predicted/virtual_wall", 1);
+    node->create_publisher<visualization_msgs::msg::MarkerArray>("~/predicted/virtual_wall", 1);
   debug_viz_pub_ =
-    node_.create_publisher<visualization_msgs::msg::MarkerArray>("~/predicted/debug/marker", 1);
+    node_->create_publisher<visualization_msgs::msg::MarkerArray>("~/predicted/debug/marker", 1);
   stop_reason_pub_ =
-    node_.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/predicted/output/stop_reasons", 1);
+    node_->create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/predicted/output/stop_reasons", 1);
   pub_debug_values_ =
-    node_.create_publisher<Float32MultiArrayStamped>("~/predicted/obstacle_stop/debug_values", 1);
+    node_->create_publisher<Float32MultiArrayStamped>("~/predicted/obstacle_stop/debug_values", 1);
 }
 
 bool ObstacleStopPlannerDebugNode::pushPolygon(
@@ -157,7 +157,7 @@ void ObstacleStopPlannerDebugNode::publish()
 
   // publish debug values
   tier4_debug_msgs::msg::Float32MultiArrayStamped debug_msg{};
-  debug_msg.stamp = node_.now();
+  debug_msg.stamp = node_->now();
   for (const auto & v : debug_values_.getValues()) {
     debug_msg.data.push_back(v);
   }
@@ -178,7 +178,7 @@ void ObstacleStopPlannerDebugNode::publish()
 visualization_msgs::msg::MarkerArray ObstacleStopPlannerDebugNode::makeVirtualWallMarker()
 {
   visualization_msgs::msg::MarkerArray msg;
-  rclcpp::Time current_time = node_.now();
+  rclcpp::Time current_time = node_->now();
 
   if (stop_pose_ptr_ != nullptr) {
     const auto p = calcOffsetPose(*stop_pose_ptr_, base_link2front_, 0.0, 0.0);
@@ -223,7 +223,7 @@ visualization_msgs::msg::MarkerArray ObstacleStopPlannerDebugNode::makeVirtualWa
 visualization_msgs::msg::MarkerArray ObstacleStopPlannerDebugNode::makeVisualizationMarker()
 {
   visualization_msgs::msg::MarkerArray msg;
-  rclcpp::Time current_time = node_.now();
+  rclcpp::Time current_time = node_->now();
 
   // polygon
   if (!vehicle_polygons_.empty()) {
@@ -375,7 +375,7 @@ tier4_planning_msgs::msg::StopReasonArray ObstacleStopPlannerDebugNode::makeStop
   // create header
   std_msgs::msg::Header header;
   header.frame_id = "map";
-  header.stamp = node_.now();
+  header.stamp = node_->now();
 
   // create stop reason stamped
   tier4_planning_msgs::msg::StopReason stop_reason_msg;

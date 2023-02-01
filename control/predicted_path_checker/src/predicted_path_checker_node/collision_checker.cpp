@@ -27,12 +27,13 @@
 
 namespace collision_checker
 {
-CollisionChecker::CollisionChecker(rclcpp::Node & node)
-: vehicle_info_(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo())
+CollisionChecker::CollisionChecker(rclcpp::Node * node)
+: vehicle_info_(vehicle_info_util::VehicleInfoUtil(*node).getVehicleInfo())
 {
   debug_ptr_ = std::make_shared<motion_planning::ObstacleStopPlannerDebugNode>(
     node, vehicle_info_.max_longitudinal_offset_m);
 }
+
 void CollisionChecker::setParam(const collisionCheckerParam & param) { param_ = param; }
 
 boost::optional<Output> CollisionChecker::run(const Input & input)
@@ -122,7 +123,7 @@ boost::optional<std::pair<size_t, size_t>> CollisionChecker::checkTrajectoryForC
       return boost::make_optional(std::make_pair(collision_idx, stop_idx));
     }
   }
-    debug_ptr_->publish();
+  debug_ptr_->publish();
 
   return boost::none;
 }

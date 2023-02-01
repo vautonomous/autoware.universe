@@ -82,7 +82,7 @@ PredictedPathCheckerNode::PredictedPathCheckerNode(const rclcpp::NodeOptions & n
     "/api/autoware/set/external_stop", rmw_qos_profile_services_default);
 
   // Core
-  collision_checker_ = std::make_unique<collision_checker::CollisionChecker>(*this);
+  collision_checker_ = std::make_unique<collision_checker::CollisionChecker>(this);
   collision_checker_->setParam(collision_checker_param_);
 
   // Diagnostic Updater

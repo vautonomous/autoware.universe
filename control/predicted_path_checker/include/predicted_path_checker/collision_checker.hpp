@@ -88,7 +88,7 @@ struct Input
 class CollisionChecker
 {
 public:
-  explicit CollisionChecker(rclcpp::Node & node);
+  explicit CollisionChecker(rclcpp::Node *node);
   boost::optional<Output> run(const Input & input);
   void setParam(const collisionCheckerParam & param);
 
