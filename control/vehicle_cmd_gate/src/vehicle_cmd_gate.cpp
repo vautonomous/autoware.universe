@@ -418,7 +418,7 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
 
   // Check engage
   if (!is_engaged_ || !start_request_->isAccepted()) {
-    filtered_commands.control = createStopControlCmd();
+    filtered_commands.control = createStopControlCmd(filtered_commands.control);
   }
 
   // Check stopped after applying all gates
@@ -526,14 +526,14 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   return out;
 }
 
-AckermannControlCommand VehicleCmdGate::createStopControlCmd() const
+AckermannControlCommand VehicleCmdGate::createStopControlCmd(const AckermannControlCommand & in) const
 {
   AckermannControlCommand cmd;
   const auto t = this->now();
   cmd.stamp = t;
   cmd.lateral.stamp = t;
   cmd.longitudinal.stamp = t;
-  cmd.lateral.steering_tire_angle = current_steer_;
+  cmd.lateral.steering_tire_angle = in.lateral.steering_tire_angle;
   cmd.lateral.steering_tire_rotation_rate = 0.0;
   cmd.longitudinal.speed = 0.0;
   cmd.longitudinal.acceleration = stop_hold_acceleration_;

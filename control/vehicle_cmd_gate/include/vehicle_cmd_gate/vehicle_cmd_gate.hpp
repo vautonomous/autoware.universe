@@ -203,7 +203,7 @@ private:
 
   // Algorithm
   AckermannControlCommand prev_control_cmd_;
-  AckermannControlCommand createStopControlCmd() const;
+  AckermannControlCommand createStopControlCmd(const AckermannControlCommand & in) const;
   AckermannControlCommand createEmergencyStopControlCmd() const;
 
   std::shared_ptr<rclcpp::Time> prev_time_;
