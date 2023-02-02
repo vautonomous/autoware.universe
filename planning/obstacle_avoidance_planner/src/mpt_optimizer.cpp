@@ -1383,7 +1383,7 @@ void MPTOptimizer::calcBounds(
     geometry_msgs::msg::Point p1;
     geometry_msgs::msg::Point p2;
 
-    const double min_curvature = 0.03;  // [1/m]
+    const double min_curvature = 0.0;  // [1/m]
     const double max_curvature = 0.20;  // [1/m]
 
     const double min_clearance = 0.40;  // [m]
