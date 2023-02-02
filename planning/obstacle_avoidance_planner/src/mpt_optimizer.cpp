@@ -1394,7 +1394,7 @@ void MPTOptimizer::calcBounds(
     const double max_curvature = 0.20;  // [1/m]
 
     const double min_clearance = 0.40;  // [m]
-    const double max_clearance = 1.0;  // [m]
+    const double max_clearance = 1.0;   // [m]
 
     p1.x = min_curvature;
     p2.x = max_curvature;
@@ -1409,7 +1409,7 @@ void MPTOptimizer::calcBounds(
 
     // y=mx+b
     auto adaptive_road_clearance = std::clamp(m * current_curvature + b, p1.y, p2.y);
-    if(prev_clearance > adaptive_road_clearance) {
+    if (prev_clearance > adaptive_road_clearance) {
       adaptive_road_clearance = prev_clearance - 0.01 * (prev_clearance - adaptive_road_clearance);
     }
 
@@ -1695,6 +1695,88 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
   // if empty
   // TODO(murooka) sometimes this condition realizes
   if (bounds_candidate.empty()) {
+    const double adaptive_road_clearance_tmp = 0.20;
+    traversed_dist = -max_search_lane_width;
+    current_right_bound = -max_search_lane_width;
+
+    // calculate the initial position is empty or not
+    // 0.drivable, 1.out of map, 2.out of road, 3. object
+    previous_collision_type = getCollisionType(
+      maps, enable_avoidance, avoiding_point, traversed_dist, adaptive_road_clearance_tmp, bound_angle);
+
+    latest_right_bound_collision_type = previous_collision_type;
+    while (traversed_dist < max_search_lane_width) {
+      for (size_t search_idx = 0; search_idx < search_widths.size(); ++search_idx) {
+        const double ds = search_widths.at(search_idx);
+        while (true) {
+          const CollisionType current_collision_type = getCollisionType(
+            maps, enable_avoidance, avoiding_point, traversed_dist, adaptive_road_clearance_tmp,
+            bound_angle);
+
+          if (has_collision(current_collision_type)) {  // currently collision
+            if (!has_collision(previous_collision_type)) {
+              // if target_position becomes collision from no collision or out_of_sight
+              if (search_idx == search_widths.size() - 1) {
+                const double left_bound = traversed_dist - ds / 2.0;
+                bounds_candidate.push_back(Bounds{
+                  current_right_bound, left_bound, latest_right_bound_collision_type,
+                  current_collision_type});
+                previous_collision_type = current_collision_type;
+              }
+              break;
+            }
+          } else if (current_collision_type == CollisionType::OUT_OF_SIGHT) {  // currently
+                                                                               // out_of_sight
+            if (previous_collision_type == CollisionType::NO_COLLISION) {
+              // if target_position becomes out_of_sight from no collision
+              if (search_idx == search_widths.size() - 1) {
+                const double left_bound = max_search_lane_width;
+                bounds_candidate.push_back(Bounds{
+                  current_right_bound, left_bound, latest_right_bound_collision_type,
+                  current_collision_type});
+                previous_collision_type = current_collision_type;
+              }
+              break;
+            }
+          } else {  // currently no collision
+            if (has_collision(previous_collision_type)) {
+              // if target_position becomes no collision from collision
+              if (search_idx == search_widths.size() - 1) {
+                current_right_bound = traversed_dist - ds / 2.0;
+                latest_right_bound_collision_type = previous_collision_type;
+                previous_collision_type = current_collision_type;
+              }
+              break;
+            }
+          }
+
+          // if target_position is longer than max_search_lane_width
+          if (traversed_dist >= max_search_lane_width) {
+            if (!has_collision(previous_collision_type)) {
+              if (search_idx == search_widths.size() - 1) {
+                const double left_bound = traversed_dist - ds / 2.0;
+                bounds_candidate.push_back(Bounds{
+                  current_right_bound, left_bound, latest_right_bound_collision_type,
+                  CollisionType::OUT_OF_ROAD});
+              }
+            }
+            break;
+          }
+
+          // go forward with ds
+          traversed_dist += ds;
+          previous_collision_type = current_collision_type;
+        }
+
+        if (search_idx != search_widths.size() - 1) {
+          // go back with ds since target_position became empty or road/object
+          // NOTE: if ds is the last of search_widths, don't have to go back
+          traversed_dist -= ds;
+        }
+      }
+    }
+  }
+  if (bounds_candidate.empty()) {
     RCLCPP_WARN_EXPRESSION(
       rclcpp::get_logger("getBoundsCandidate"), is_showing_debug_info_, "empty bounds candidate");
     // NOTE: set invalid bounds so that MPT won't be solved
@@ -1702,7 +1784,6 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
       Bounds{-5.0, 5.0, CollisionType::OUT_OF_ROAD, CollisionType::OUT_OF_ROAD};
     bounds_candidate.push_back(invalid_bounds);
   }
-
   return bounds_candidate;
 }
 

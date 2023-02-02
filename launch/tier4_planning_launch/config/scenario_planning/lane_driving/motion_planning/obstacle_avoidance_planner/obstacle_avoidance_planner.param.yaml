@@ -101,7 +101,7 @@
           eps_rel: 1.0e-10 # eps rel when solving OSQP
 
       mpt:
-        bounds_search_widths: [0.45, 0.15, 0.05, 0.01]
+        bounds_search_widths: [0.45, 0.30, 0.20, 0.15, 0.12, 0.10, 0.05, 0.01, 0.0001]
 
         clearance:  # clearance(distance) between vehicle and roads/objects when generating trajectory
           hard_clearance_from_road: 0.01 # clearance from road boundary[m]
@@ -117,8 +117,8 @@
           lat_error_weight: 100.0 # weight for lateral error
           yaw_error_weight: 0.0 # weight for yaw error
           yaw_error_rate_weight: 0.0 # weight for yaw error rate
-          steer_input_weight: 1000.0 # weight for steering input
-          steer_rate_weight: 10000.0 # weight for steering rate
+          steer_input_weight: 10.0 # weight for steering input
+          steer_rate_weight: 10.0 # weight for steering rate
 
           obstacle_avoid_lat_error_weight: 3.0 # weight for lateral error
           obstacle_avoid_yaw_error_weight: 0.0 # weight for yaw error
