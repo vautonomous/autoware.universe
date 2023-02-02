@@ -273,12 +273,13 @@ private:
 
   BoundsCandidates getBoundsCandidates(
     const bool enable_avoidance, const geometry_msgs::msg::Pose & avoiding_point,
-    const CVMaps & maps, std::shared_ptr<DebugData> debug_data_ptr) const;
+    const double adaptive_road_clearance, const CVMaps & maps,
+    std::shared_ptr<DebugData> debug_data_ptr) const;
 
   CollisionType getCollisionType(
     const CVMaps & maps, const bool enable_avoidance,
     const geometry_msgs::msg::Pose & avoiding_point, const double traversed_dist,
-    const double bound_angle) const;
+    const double adaptive_road_clearance, const double bound_angle) const;
 
   boost::optional<double> getClearance(
     const cv::Mat & clearance_map, const geometry_msgs::msg::Point & map_point,
