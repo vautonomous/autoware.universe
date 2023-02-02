@@ -303,13 +303,18 @@ boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTraje
   if (!closest_idx_result) {
     return boost::none;
   }
-
+  constexpr double min_prediction_distance = 3.0;
+  constexpr double max_prediction_distance = 21.0;
+  constexpr double prediction_ratio = 2.0;
   const double remaining_distance = planning_utils::calcArcLengthFromWayPoint(
     *trajectory_resampled_, *closest_idx_result, trajectory_resampled_->points.size() - 1);
 
+  const double prediction_dist_wrt_vel = current_odometry_->twist.twist.linear.x * prediction_ratio;
+  const double prediction_dist = std::clamp(
+    prediction_dist_wrt_vel, min_prediction_distance, max_prediction_distance);
   const auto num_of_iteration = std::max(
     static_cast<int>(std::ceil(
-      std::min(remaining_distance, param_.prediction_distance_length) / param_.prediction_ds)),
+      std::min(remaining_distance, prediction_dist) / param_.prediction_ds)),
     1);
   Trajectory predicted_trajectory;
 
