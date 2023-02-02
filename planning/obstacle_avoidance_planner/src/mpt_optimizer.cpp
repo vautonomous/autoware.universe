@@ -1384,6 +1384,7 @@ void MPTOptimizer::calcBounds(
 
   // search bounds candidate for each ref points
   SequentialBoundsCandidates sequential_bounds_candidates;
+  double prev_clearance = 0.40;
   for (const auto & ref_point : ref_points) {
     // point.x : curvature [1/m] -- point.y : clearance [m]
     geometry_msgs::msg::Point p1;
@@ -1393,7 +1394,7 @@ void MPTOptimizer::calcBounds(
     const double max_curvature = 0.20;  // [1/m]
 
     const double min_clearance = 0.40;  // [m]
-    const double max_clearance = 1.00;  // [m]
+    const double max_clearance = 1.0;  // [m]
 
     p1.x = min_curvature;
     p2.x = max_curvature;
@@ -1407,7 +1408,10 @@ void MPTOptimizer::calcBounds(
     const auto b = p1.y - (m * p1.x);
 
     // y=mx+b
-    const auto adaptive_road_clearance = std::clamp(m * current_curvature + b, p1.y, p2.y);
+    auto adaptive_road_clearance = std::clamp(m * current_curvature + b, p1.y, p2.y);
+    if(prev_clearance > adaptive_road_clearance) {
+      adaptive_road_clearance = prev_clearance - 0.01 * (prev_clearance - adaptive_road_clearance);
+    }
 
     std::cout << "curvature: " << ref_point.k << " || "
               << "adaptive_road_clearance: " << adaptive_road_clearance << " || "
@@ -1417,6 +1421,7 @@ void MPTOptimizer::calcBounds(
       enable_avoidance, convertRefPointsToPose(ref_point), adaptive_road_clearance, maps,
       debug_data_ptr);
     sequential_bounds_candidates.push_back(bounds_candidates);
+    prev_clearance = adaptive_road_clearance;
   }
   debug_data_ptr->sequential_bounds_candidates = sequential_bounds_candidates;
 

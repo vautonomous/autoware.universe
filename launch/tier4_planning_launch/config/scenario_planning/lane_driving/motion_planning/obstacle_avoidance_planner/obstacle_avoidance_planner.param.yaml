@@ -10,7 +10,7 @@
       is_stopping_if_outside_drivable_area: true # stop if the ego's footprint will be outside the drivable area
 
       # show
-      is_showing_debug_info: false
+      is_showing_debug_info: true
       is_showing_calculation_time: false
 
       # other
@@ -146,7 +146,7 @@
               radius_ratio: 1.13
 
             fitting_uniform_circle:
-              num: 3  # must be greater than 1
+              num: 4  # must be greater than 1
 
             rear_drive:
               num_for_calculation: 3
