@@ -1377,7 +1377,7 @@ void MPTOptimizer::calcBounds(
 
   // search bounds candidate for each ref points
   SequentialBoundsCandidates sequential_bounds_candidates;
-  double prev_clearance = 0.40;
+  double prev_clearance = 0.0;
   for (const auto & ref_point : ref_points) {
     // point.x : curvature [1/m] -- point.y : clearance [m]
     geometry_msgs::msg::Point p1;
@@ -1386,7 +1386,7 @@ void MPTOptimizer::calcBounds(
     const double min_curvature = 0.0;  // [1/m]
     const double max_curvature = 0.20;  // [1/m]
 
-    const double min_clearance = 0.40;  // [m]
+    const double min_clearance = 0.0;  // [m]
     const double max_clearance = 1.0;   // [m]
 
     p1.x = min_curvature;

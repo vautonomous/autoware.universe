@@ -139,7 +139,7 @@
             two_step_soft_constraint: true
 
           vehicle_circles:
-            method: "fitting_uniform_circle"
+            method: "rear_drive"
 
             uniform_circle:
               num: 3
@@ -150,5 +150,5 @@
 
             rear_drive:
               num_for_calculation: 3
-              front_radius_ratio: 1.1
-              rear_radius_ratio: 1.1
+              front_radius_ratio: 1.0
+              rear_radius_ratio: 1.0
