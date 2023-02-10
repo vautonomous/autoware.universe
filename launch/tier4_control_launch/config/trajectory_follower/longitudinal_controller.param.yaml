@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     longitudinal_ctrl_period: 0.03  # control period [s]
-    delay_compensation_time: 0.70  # delay compensation time [s]
+    delay_compensation_time: 1.0  # delay compensation time [s]
 
     enable_smooth_stop: false
     enable_overshoot_emergency: true
@@ -21,7 +21,7 @@
     emergency_state_traj_rot_dev: 0.7
 
     # drive state
-    kp: 0.45
+    kp: 1.0
     ki: 0.1
     kd: 0.0
     max_out: 0.9
