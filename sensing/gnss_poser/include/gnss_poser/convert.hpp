@@ -165,7 +165,8 @@ GNSSStat NavSatFix2MGRS(
   const rclcpp::Logger & logger)
 {
   const auto utm = NavSatFix2UTM(nav_sat_fix_msg, logger);
-  const auto mgrs = UTM2MGRS(utm, precision, logger);
+  auto mgrs = UTM2MGRS(utm, precision, logger);
+  mgrs.z -= 10.5;
   return mgrs;
 }
 
