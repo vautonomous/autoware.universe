@@ -39,11 +39,11 @@
 
   <!-- rosbridge -->
   <!-- TODO: respawn will work once https://github.com/ros2/launch/pull/569 is released. I'll delete this comment when it's done. -->
-  <group>
-    <include file="$(find-pkg-share rosbridge_server)/launch/rosbridge_websocket_launch.xml">
-      <arg name="respawn" value="$(var respawn_rosbridge)"/>
-      <arg name="topics_glob" value="$(var topics_glob)"/>
-      <arg name="use_compression" value="$(var use_compression)"/>
-    </include>
-  </group>
+<!--  <group>-->
+<!--    <include file="$(find-pkg-share rosbridge_server)/launch/rosbridge_websocket_launch.xml">-->
+<!--      <arg name="respawn" value="$(var respawn_rosbridge)"/>-->
+<!--      <arg name="topics_glob" value="$(var topics_glob)"/>-->
+<!--      <arg name="use_compression" value="$(var use_compression)"/>-->
+<!--    </include>-->
+<!--  </group>-->
 </launch>
