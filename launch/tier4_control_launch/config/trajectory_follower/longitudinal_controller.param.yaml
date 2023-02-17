@@ -22,7 +22,7 @@
 
     # drive state
     kp: 1.0
-    ki: 0.1
+    ki: 0.15
     kd: 0.0
     max_out: 0.9
     min_out: -1.5
@@ -35,7 +35,7 @@
     lpf_vel_error_gain: 0.7
     current_vel_threshold_pid_integration: -0.001
     enable_brake_keeping_before_stop: true
-    brake_keeping_acc: -0.2
+    brake_keeping_acc: -0.5
 
     # smooth stop state
     smooth_stop_max_strong_acc: -0.6

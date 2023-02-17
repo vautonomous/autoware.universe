@@ -62,7 +62,7 @@
     new_traj_end_dist: 0.1
     ld_velocity_ratio: 2.5
     ld_lateral_error_ratio: 3.6
-    ld_curvature_ratio: 80.0
+    ld_curvature_ratio: 120.0
     long_ld_lateral_error_threshold: 0.5
     min_lookahead_distance: 4.85
     max_lookahead_distance: 15.0
