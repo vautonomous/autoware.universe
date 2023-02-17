@@ -143,7 +143,7 @@
 
             uniform_circle:
               num: 3
-              radius_ratio: 1.13
+              radius_ratio: 1.15
 
             rear_drive:
               num_for_calculation: 3
