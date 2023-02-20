@@ -192,18 +192,66 @@ TrajectoryPoint PurePursuitLateralController::calcNextPose(
   return output_p;
 }
 
+TrajectoryPoint getExtendTrajectoryPoint(
+  const double extend_distance, const TrajectoryPoint & goal_point)
+{
+  tf2::Transform map2goal;
+  tf2::fromMsg(goal_point.pose, map2goal);
+  tf2::Transform local_extend_point;
+  local_extend_point.setOrigin(tf2::Vector3(extend_distance, 0.0, 0.0));
+  tf2::Quaternion q;
+  q.setRPY(0, 0, 0);
+  local_extend_point.setRotation(q);
+  const auto map2extend_point = map2goal * local_extend_point;
+  geometry_msgs::msg::Pose extend_pose;
+  tf2::toMsg(map2extend_point, extend_pose);
+  TrajectoryPoint extend_trajectory_point;
+  extend_trajectory_point.pose = extend_pose;
+  extend_trajectory_point.longitudinal_velocity_mps = goal_point.longitudinal_velocity_mps;
+  extend_trajectory_point.lateral_velocity_mps = goal_point.lateral_velocity_mps;
+  extend_trajectory_point.acceleration_mps2 = goal_point.acceleration_mps2;
+  return extend_trajectory_point;
+}
+
+std::vector<TrajectoryPoint> extendTrajectory(
+  const std::vector<TrajectoryPoint> & input, const double extend_distance, const double ds)
+{
+  std::vector<TrajectoryPoint> output = input;
+
+  if (extend_distance < std::numeric_limits<double>::epsilon()) {
+    return output;
+  }
+
+  const auto goal_point = input.back();
+
+  double extend_sum = 0.0;
+  while (extend_sum <= (extend_distance - ds)) {
+    const auto extend_trajectory_point = getExtendTrajectoryPoint(extend_sum, goal_point);
+    output.push_back(extend_trajectory_point);
+    extend_sum += ds;
+  }
+  const auto extend_trajectory_point = getExtendTrajectoryPoint(extend_distance, goal_point);
+  output.push_back(extend_trajectory_point);
+
+  return output;
+}
+
 void PurePursuitLateralController::setResampledTrajectory()
 {
   // Interpolate with constant interval distance.
   std::vector<double> out_arclength;
-  const auto input_tp_array = motion_utils::convertToTrajectoryPointArray(*trajectory_);
+  auto input_tp_array = motion_utils::convertToTrajectoryPointArray(*trajectory_);
+  input_tp_array.push_back(getExtendTrajectoryPoint(10.0 ,input_tp_array.back()));
   const auto traj_length = motion_utils::calcArcLength(input_tp_array);
+
   for (double s = 0; s < traj_length; s += param_.resampling_ds) {
     out_arclength.push_back(s);
   }
+
   trajectory_resampled_ =
     std::make_shared<autoware_auto_planning_msgs::msg::Trajectory>(motion_utils::resampleTrajectory(
       motion_utils::convertToTrajectory(input_tp_array), out_arclength));
+
   trajectory_resampled_->points.back() = trajectory_->points.back();
   trajectory_resampled_->header = trajectory_->header;
   output_tp_array_ = boost::optional<std::vector<TrajectoryPoint>>(
