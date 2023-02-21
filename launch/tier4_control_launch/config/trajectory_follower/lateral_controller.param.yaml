@@ -64,7 +64,7 @@
     ld_lateral_error_ratio: 3.6
     ld_curvature_ratio: 120.0
     long_ld_lateral_error_threshold: 0.5
-    min_lookahead_distance: 4.85
+    min_lookahead_distance: 4.55
     max_lookahead_distance: 15.0
     reverse_min_lookahead_distance: 7.0
     prediction_ds: 0.3
