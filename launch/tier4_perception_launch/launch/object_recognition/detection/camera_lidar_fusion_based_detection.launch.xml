@@ -114,15 +114,17 @@
           <arg name="input/rois7" value="/perception/object_recognition/detection/rois7"/>
           <arg name="input/rois_number" value="$(var image_number)"/>
           <arg name="input/clusters" value="$(var input/clustering)"/>
-          <arg name="input/image0" value="$(var image_raw0)"/>
-          <arg name="input/image1" value="$(var image_raw1)"/>
-          <arg name="input/image2" value="$(var image_raw2)"/>
+          <arg name="input/image0" value="/perception/object_recognition/detection/image_rect_front"/>
+          <arg name="input/image1" value="/perception/object_recognition/detection/image_rect_left"/>
+          <arg name="input/image2" value="/perception/object_recognition/detection/image_rect_right"/>
           <arg name="input/image3" value="$(var image_raw3)"/>
           <arg name="input/image4" value="$(var image_raw4)"/>
           <arg name="input/image5" value="$(var image_raw5)"/>
           <arg name="input/image6" value="$(var image_raw6)"/>
           <arg name="input/image7" value="$(var image_raw7)"/>
           <arg name="output/clusters" value="clusters"/>
+          <arg name="debug_mode" value="false"/>
+
         </include>
       </group>
 
