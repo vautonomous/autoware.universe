@@ -193,7 +193,7 @@ bool MapBasedDetector::getTrafficLightRoi(
   const lanelet::ConstLineString3d traffic_light, const Config & config,
   autoware_auto_perception_msgs::msg::TrafficLightRoi & tl_roi)
 {
-  const double tl_height = traffic_light.attributeOr("height", 0.0);
+  const double tl_height = traffic_light.attributeOr("height", 0.0) + 0.3;
   const auto & tl_left_down_point = traffic_light.front();
   const auto & tl_right_down_point = traffic_light.back();
 
@@ -382,7 +382,7 @@ void MapBasedDetector::getVisibleTrafficLights(
   for (const auto & traffic_light : all_traffic_lights) {
     const auto & tl_left_down_point = traffic_light.front();
     const auto & tl_right_down_point = traffic_light.back();
-    const double tl_height = traffic_light.attributeOr("height", 0.0);
+    const double tl_height = traffic_light.attributeOr("height", 0.0) + 0.3;
 
     // check distance range
     geometry_msgs::msg::Point tl_central_point;
@@ -482,7 +482,7 @@ void MapBasedDetector::publishVisibleTrafficLights(
   for (const auto & traffic_light : visible_traffic_lights) {
     const auto & tl_left_down_point = traffic_light.front();
     const auto & tl_right_down_point = traffic_light.back();
-    const double tl_height = traffic_light.attributeOr("height", 0.0);
+    const double tl_height = traffic_light.attributeOr("height", 0.0) + 0.3;
     const int id = traffic_light.id();
 
     geometry_msgs::msg::Point tl_central_point;

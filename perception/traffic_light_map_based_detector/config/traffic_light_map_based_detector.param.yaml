@@ -8,6 +8,6 @@
 
     # Scale value  = 1.0 + (scale_factor / scale_start_distance)
     scale_start_distance: 35.0
-    scale_factor: 7.0
+    scale_factor: 10.0
 
     # overwrite traffic light
