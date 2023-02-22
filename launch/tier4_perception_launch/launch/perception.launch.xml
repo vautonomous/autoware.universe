@@ -28,7 +28,7 @@
   <arg name="image_number" default="3" description="choose image raw number(0-7)"/>
   <arg name="use_vector_map" default="true" description="use vector map in prediction"/>
   <arg name="use_pointcloud_map" default="true" description="use pointcloud map in detection"/>
-  <arg name="use_object_filter" default="false" description="use object filter"/>
+  <arg name="use_object_filter" default="true" description="use object filter"/>
   <arg
       name="use_empty_dynamic_object_publisher"
       default="false"
