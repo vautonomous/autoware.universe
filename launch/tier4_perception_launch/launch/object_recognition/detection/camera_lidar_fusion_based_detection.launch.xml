@@ -147,7 +147,7 @@
           <arg name="input/object" value="objects"/>
           <arg name="output/long_range_object" value="long_range_objects"/>
           <arg name="output/short_range_object" value="short_range_objects"/>
-          <arg name="split_range" value="30.0"/>
+          <arg name="split_range" value="40.0"/>
         </include>
       </group>
     </group>
