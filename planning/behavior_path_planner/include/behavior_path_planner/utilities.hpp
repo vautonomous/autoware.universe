@@ -451,6 +451,9 @@ bool isCollisionPredictedObjectPath(
   const PredictedObject & object, const PathWithLaneId & ego_path,
   const lanelet::ConstLanelets & target_lanelets);
 
+Polygon2d createPolygonWithOffset(
+  const Polygon2d & base_polygon, const double & offset);
+
 }  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_

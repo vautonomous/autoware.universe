@@ -840,7 +840,9 @@ bool isCollisionPredictedObjectPath(
         boost::geometry::append(ego_path_line, Point2d(point.x, point.y));
       }
 
-      if (boost::geometry::intersects(obj_pred_polygon, ego_path_line)) {
+      const auto obj_pred_polygon_with_offset = createPolygonWithOffset(obj_pred_polygon, 2.0);
+
+      if (boost::geometry::intersects(obj_pred_polygon_with_offset, ego_path_line)) {
         return true;
       }
     }
@@ -2412,4 +2414,27 @@ bool isSafeInFreeSpaceCollisionCheck(
   }
   return true;
 }
+
+Polygon2d createPolygonWithOffset(const Polygon2d & base_polygon, const double & offset)
+{
+  auto base_polygon_copy = base_polygon;
+  bg::correct(base_polygon_copy);
+
+  typedef double coordinate_type;
+  const double buffer_distance = offset;
+  const int points_per_circle = 36;
+  boost::geometry::strategy::buffer::distance_symmetric<coordinate_type> distance_strategy(
+    buffer_distance);
+  boost::geometry::strategy::buffer::join_round join_strategy(points_per_circle);
+  boost::geometry::strategy::buffer::end_round end_strategy(points_per_circle);
+  boost::geometry::strategy::buffer::point_circle circle_strategy(points_per_circle);
+  boost::geometry::strategy::buffer::side_straight side_strategy;
+  boost::geometry::model::multi_polygon<Polygon2d> result;
+  // Create the buffer of a multi polygon
+  boost::geometry::buffer(
+    base_polygon_copy, result, distance_strategy, side_strategy, join_strategy, end_strategy,
+    circle_strategy);
+  return result.front();
+}
+
 }  // namespace behavior_path_planner::util
