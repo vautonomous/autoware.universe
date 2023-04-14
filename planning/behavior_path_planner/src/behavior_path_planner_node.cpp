@@ -301,6 +301,10 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.static_right_expand_bound_offset = dp("static_right_bound_offset", 0.5);
   p.static_left_expand_bound_offset = dp("static_left_bound_offset", 0.5);
 
+  // safety check
+  p.enable_safety_check = dp("enable_safety_check", true);
+  p.safety_check_backward_distance = dp("safety_check_backward_distance", 100.0);
+
   return p;
 }
 
