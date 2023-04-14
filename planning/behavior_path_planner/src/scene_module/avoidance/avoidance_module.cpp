@@ -23,6 +23,8 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
+#include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
+#include "autoware_auto_perception_msgs/msg/predicted_path.hpp"
 #include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
 
 #include <algorithm>
@@ -44,6 +46,7 @@ using motion_utils::calcSignedArcLength;
 using motion_utils::findNearestIndex;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcLateralDeviation;
+using tier4_autoware_utils::Polygon2d;
 using tier4_planning_msgs::msg::AvoidanceDebugFactor;
 
 AvoidanceModule::AvoidanceModule(
@@ -477,8 +480,7 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
   const auto & road_shoulder_safety_margin = parameters_->road_shoulder_safety_margin;
 
-  auto avoid_margin =
-    lat_collision_safety_buffer + lat_collision_margin + 0.5 * vehicle_width;
+  auto avoid_margin = lat_collision_safety_buffer + lat_collision_margin + 0.5 * vehicle_width;
 
   AvoidPointArray avoid_points;
   std::vector<AvoidanceDebugMsg> avoidance_debug_msg_array;
@@ -2036,6 +2038,10 @@ BehaviorModuleOutput AvoidanceModule::plan()
     }
   }
 
+  if (!isSafePath(path_shifter_, avoidance_path)) {
+    avoidance_path.path = prev_reference_;
+  }
+
   BehaviorModuleOutput output;
   output.turn_signal_info = calcTurnSignalInfo(avoidance_path);
   // sparse resampling for computational cost
@@ -2050,6 +2056,8 @@ BehaviorModuleOutput AvoidanceModule::plan()
       avoidance_path.path, parameters_->static_right_expand_bound_offset,
       parameters_->static_left_expand_bound_offset);
   }
+
+
 
   output.path = std::make_shared<PathWithLaneId>(avoidance_path.path);
 
@@ -2691,6 +2699,105 @@ bool AvoidanceModule::expandDrivableArea(
     path_with_lane_id, current_lanes, planner_data_->parameters.drivable_area_resolution,
     planner_data_->parameters.vehicle_length, planner_data_);
 
+  return true;
+}
+
+std::pair<lanelet::ConstLanelets, int> AvoidanceModule::getAdjacentLanes(
+  const PathShifter & path_shifter, const double forward_distance,
+  const double backward_distance) const
+{
+  const auto & rh = planner_data_->route_handler;
+
+  bool has_left_shift = false;
+  bool has_right_shift = false;
+
+  for (const auto & sp : path_shifter.getShiftPoints()) {
+    if (sp.length > 0.01) {
+      has_left_shift = true;
+      continue;
+    }
+
+    if (sp.length < -0.01) {
+      has_right_shift = true;
+      continue;
+    }
+  }
+
+  lanelet::ConstLanelet current_lane;
+  if (!rh->getClosestLaneletWithinRoute(getEgoPose().pose, &current_lane)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("behavior_path_planner").get_child("avoidance"),
+      "failed to find closest lanelet within route!!!");
+    return {};  // TODO(Satoshi Ota)
+  }
+
+  const auto ego_succeeding_lanes =
+    rh->getLaneletSequence(current_lane, getEgoPose().pose, backward_distance, forward_distance);
+
+  lanelet::ConstLanelets check_lanes{};
+  int lane_direction = -1;  // 0-Same Direction // 1-Opposite Direction // -1-None
+  for (const auto & lane : ego_succeeding_lanes) {
+    const auto opt_left_lane = rh->getLeftLanelet(lane);
+    if (has_left_shift && opt_left_lane) {
+      check_lanes.push_back(opt_left_lane.get());
+      lane_direction = 0;
+    }
+
+    const auto opt_right_lane = rh->getRightLanelet(lane);
+    if (has_right_shift && opt_right_lane) {
+      check_lanes.push_back(opt_right_lane.get());
+      lane_direction = 0;
+    }
+
+    const auto left_opposite_lanes = rh->getLeftOppositeLanelets(lane);
+    if (has_left_shift && !left_opposite_lanes.empty()) {
+      check_lanes.push_back(left_opposite_lanes.front());
+      lane_direction = 1;
+    }
+
+    const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
+    if (has_right_shift && !right_opposite_lanes.empty()) {
+      check_lanes.push_back(right_opposite_lanes.front());
+      lane_direction = 1;
+    }
+  }
+
+  return std::make_pair(check_lanes, lane_direction);
+}
+
+bool AvoidanceModule::isSafePath(const PathShifter & path_shifter, ShiftedPath & shifted_path) const
+{
+  const auto & p = parameters_;
+
+  if (!p->enable_safety_check) {
+    return true;  // if safety check is disabled, it always return safe.
+  }
+
+  const auto & forward_check_distance = p->object_check_forward_distance;
+  const auto & backward_check_distance = p->safety_check_backward_distance;
+  const auto [check_lanes, lane_direction] =
+    getAdjacentLanes(path_shifter, forward_check_distance, backward_check_distance);
+
+  const auto moving_objects = util::filterObjectsByVelocity(
+    *planner_data_->dynamic_object, p->threshold_speed_object_is_stopped, 50.0);
+
+  const auto adjacent_lane_objects_index =
+    util::filterObjectIndicesByLanelets(moving_objects, check_lanes);
+
+  for (const auto & i : adjacent_lane_objects_index) {
+    const auto & object = moving_objects.objects.at(i);
+
+    const auto distance =
+      calcLongitudinalByClosestFootprint(shifted_path.path, object, getEgoPose().pose.position);
+
+    if (lane_direction == 0 && distance > 10.0) continue;
+    if (lane_direction == 1 && distance < -10.0) continue;
+
+    // check for collision between object predicted path and ego path
+    if (util::isCollisionPredictedObjectPath(object, shifted_path.path, check_lanes)) {
+      return false;
+    }
+  }
   return true;
 }
 

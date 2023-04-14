@@ -17,6 +17,7 @@
 
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <memory>
 #include <string>
@@ -25,6 +26,10 @@
 namespace behavior_path_planner
 {
 using behavior_path_planner::PlannerData;
+
+using tier4_autoware_utils::Polygon2d;
+using autoware_auto_perception_msgs::msg::Shape;
+
 bool isOnRight(const ObjectData & obj);
 
 double calcShiftLength(
@@ -64,6 +69,29 @@ void setStartData(
 std::string getUuidStr(const ObjectData & obj);
 
 std::vector<std::string> getUuidStr(const ObjectDataArray & objs);
+
+///////////////////////////
+
+std::pair<PredictedObjects, PredictedObjects> separateObjectsByLanelets(
+  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
+
+std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanelets(
+  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
+
+bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon);
+
+Polygon2d convertBoundingBoxObjectToGeometryPolygon(
+  const Pose & current_pose, const double & base_to_front, const double & base_to_rear,
+  const double & base_to_width);
+
+Polygon2d convertCylindricalObjectToGeometryPolygon(
+  const Pose & current_pose, const Shape & obj_shape);
+
+Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const Shape & obj_shape);
+
+double calcLongitudinalByClosestFootprint(
+  const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos);
+
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_UTILS_HPP_

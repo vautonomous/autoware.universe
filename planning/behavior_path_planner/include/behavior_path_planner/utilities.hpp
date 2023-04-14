@@ -446,6 +446,11 @@ bool isSafeInFreeSpaceCollisionCheck(
   const double & ego_vehicle_width, const double & check_start_time, const double & check_end_time,
   const double & check_time_resolution, const PredictedObject & target_object,
   const BehaviorPathPlannerParameters & common_parameters, CollisionCheckDebug & debug);
+
+bool isCollisionPredictedObjectPath(
+  const PredictedObject & object, const PathWithLaneId & ego_path,
+  const lanelet::ConstLanelets & target_lanelets);
+
 }  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_

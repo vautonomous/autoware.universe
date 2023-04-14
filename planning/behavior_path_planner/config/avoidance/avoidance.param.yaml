@@ -7,6 +7,10 @@
       detection_area_right_expand_dist: 0.0
       detection_area_left_expand_dist: 1.0
 
+      # safety check
+      enable_safety_check: true
+      safety_check_backward_distance: 100.0
+
       enable_avoidance_over_same_direction: true
       enable_avoidance_over_opposite_direction: true
 

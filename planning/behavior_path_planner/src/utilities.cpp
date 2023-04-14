@@ -796,6 +796,58 @@ std::vector<size_t> filterObjectsIndicesByPath(
   return indices;
 }
 
+bool isCollisionPredictedObjectPath(
+  const PredictedObject & object, const PathWithLaneId & ego_path,
+  const lanelet::ConstLanelets & target_lanelets)
+{
+  for (size_t k = 0; k < object.kinematics.predicted_paths.size(); ++k) {
+    const auto & predicted_path = object.kinematics.predicted_paths.at(k);
+    bool skip_pred_path = true;
+    lanelet::BasicPoint2d last_point{
+      predicted_path.path.back().position.x, predicted_path.path.back().position.y};
+
+    for (const auto & lanelet : target_lanelets) {
+      if (lanelet::geometry::inside(lanelet, last_point)) {
+        skip_pred_path = false;
+        break;
+      }
+    }
+
+    if (skip_pred_path) {
+      continue;
+    }
+
+    for (const auto & path_pose : predicted_path.path) {
+      Polygon2d obj_pred_polygon;
+      if (object.shape.type == Shape::BOUNDING_BOX) {
+        const double & len_x = object.shape.dimensions.x;
+        const double & len_y = object.shape.dimensions.y;
+        obj_pred_polygon = convertBoundingBoxObjectToGeometryPolygon(path_pose, len_x, len_y);
+      } else if (object.shape.type == Shape::CYLINDER) {
+        obj_pred_polygon = convertCylindricalObjectToGeometryPolygon(path_pose, object.shape);
+      } else if (object.shape.type == Shape::POLYGON) {
+        obj_pred_polygon = convertPolygonObjectToGeometryPolygon(path_pose, object.shape);
+      } else {
+        RCLCPP_WARN(
+          rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+          "Object shape unknown!");
+        return false;
+      }
+
+      const auto ego_path_point_array = convertToGeometryPointArray(ego_path);
+      LineString2d ego_path_line;
+      for (const auto & point : ego_path_point_array) {
+        boost::geometry::append(ego_path_line, Point2d(point.x, point.y));
+      }
+
+      if (boost::geometry::intersects(obj_pred_polygon, ego_path_line)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 PathWithLaneId removeOverlappingPoints(const PathWithLaneId & input_path)
 {
   PathWithLaneId filtered_path;
