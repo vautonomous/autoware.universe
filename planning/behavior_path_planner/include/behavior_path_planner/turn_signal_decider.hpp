@@ -50,6 +50,9 @@ private:
     const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
     const RouteHandler & route_handler) const;
 
+  std::pair<TurnIndicatorsCommand, double> getGoalPoseTurnSignal(const PathWithLaneId &path, const Pose &current_pose,
+                                                                 const RouteHandler &route_handler) const;
+
   rclcpp::Logger logger_{
     rclcpp::get_logger("behavior_path_planner").get_child("turn_signal_decider")};
 

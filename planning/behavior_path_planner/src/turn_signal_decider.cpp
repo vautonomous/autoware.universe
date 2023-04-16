@@ -45,6 +45,19 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
     turn_signal.command = intersection_turn_signal.command;
   }
 
+  // If the distance to goal point is nearer than path change point,
+  // use turn signal for stopping at the goal point
+  const auto approaching_goal_point_result = getGoalPoseTurnSignal(path, current_pose, route_handler);
+  const auto approaching_goal_point_turn_signal = approaching_goal_point_result.first;
+  const auto approaching_goal_point_distance = approaching_goal_point_result.second;
+
+  if (
+      approaching_goal_point_distance < plan_distance &&
+      (turn_signal.command == TurnIndicatorsCommand::NO_COMMAND ||
+      turn_signal.command == TurnIndicatorsCommand::DISABLE)) {
+      turn_signal.command = approaching_goal_point_turn_signal.command;
+  }
+
   return turn_signal;
 }
 
@@ -122,4 +135,37 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
   }
   return std::make_pair(turn_signal, distance);
 }
+
+std::pair<TurnIndicatorsCommand, double>
+TurnSignalDecider::getGoalPoseTurnSignal(const PathWithLaneId &path, const Pose &current_pose,
+                                         const RouteHandler &route_handler) const {
+
+    // This function is designed for right-handed traffic, it will automatically enable Right turn signal
+    // to approach goal points
+    TurnIndicatorsCommand turn_signal{};
+    turn_signal.command = TurnIndicatorsCommand::DISABLE;
+    double distance = std::numeric_limits<double>::max();
+    auto clock{rclcpp::Clock{RCL_ROS_TIME}};
+    if (path.points.empty()) {
+        return std::make_pair(turn_signal, distance);
+    }
+
+    auto goal_pose = route_handler.getGoalPose();
+
+    const double to_goal_point_distance =
+            tier4_autoware_utils::calcDistance3d(current_pose.position, goal_pose.position);
+
+    const double distance_from_vehicle_front =
+            to_goal_point_distance - base_link2front_;
+
+    // TODO: Define this threshold as a parameter
+    if(distance_from_vehicle_front <= 10.0){
+        turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+        distance = distance_from_vehicle_front;
+    }else{
+        turn_signal.command = TurnIndicatorsCommand::DISABLE;
+        distance = std::numeric_limits<double>::max();
+    }
+    return std::make_pair(turn_signal, distance);
+    }
 }  // namespace behavior_path_planner
