@@ -58,6 +58,19 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
       turn_signal.command = approaching_goal_point_turn_signal.command;
   }
 
+    // If the distance to goal point is nearer than path change point,
+    // use turn signal for stopping at the goal point
+    const auto departure_maneuver_result = getDepartureTurnSignal(path, current_pose, current_seg_idx);
+    const auto departure_maneuver_turn_signal = departure_maneuver_result.first;
+    const auto departure_maneuver_distance = departure_maneuver_result.second;
+
+    if (
+       departure_maneuver_distance < plan_distance &&
+       (turn_signal.command == TurnIndicatorsCommand::NO_COMMAND ||
+       turn_signal.command == TurnIndicatorsCommand::DISABLE)) {
+       turn_signal.command = departure_maneuver_turn_signal.command;
+    }
+
   return turn_signal;
 }
 
@@ -168,4 +181,38 @@ TurnSignalDecider::getGoalPoseTurnSignal(const PathWithLaneId &path, const Pose 
     }
     return std::make_pair(turn_signal, distance);
     }
+
+std::pair<TurnIndicatorsCommand, double>
+TurnSignalDecider::getDepartureTurnSignal(const PathWithLaneId &path, const Pose &current_pose,
+                                          const size_t current_seg_idx) const {
+
+    // This function is designed for right-handed traffic, it will activate required signal when merging into
+    // the path
+    TurnIndicatorsCommand turn_signal{};
+    turn_signal.command = TurnIndicatorsCommand::DISABLE;
+    double distance = std::numeric_limits<double>::max();
+    auto clock{rclcpp::Clock{RCL_ROS_TIME}};
+    if (path.points.empty()) {
+        return std::make_pair(turn_signal, distance);
+    }
+
+    // Get frenet coordinate of current_pose on path
+    const auto vehicle_pose_frenet =
+            util::convertToFrenetCoordinate3d(path, current_pose.position, current_seg_idx);
+
+    // Define distance as a dummy value since we won't need it
+    if(vehicle_pose_frenet.distance >= 1.0){
+        turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+        distance = 0;
+    }
+    else if(vehicle_pose_frenet.distance <= -1.0){
+        turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+        distance = 0;
+    }
+    else{
+        turn_signal.command = TurnIndicatorsCommand::DISABLE;
+        distance = std::numeric_limits<double>::max();
+    }
+    return std::make_pair(turn_signal, distance);
+}
 }  // namespace behavior_path_planner
