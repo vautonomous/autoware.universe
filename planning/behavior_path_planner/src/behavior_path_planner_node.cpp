@@ -317,6 +317,18 @@ LaneFollowingParameters BehaviorPathPlannerNode::getLaneFollowingParam()
   p.left_bound_offset = declare_parameter("lane_following.left_bound_offset", 0.5);
   p.lane_change_prepare_duration =
     declare_parameter("lane_following.lane_change_prepare_duration", 2.0);
+
+  // safety check when pull out from bus stop
+  p.enable_safety_check = declare_parameter("lane_following.enable_safety_check", true);
+  p.safety_check_backward_distance =
+    declare_parameter("lane_following.safety_check_backward_distance", 100.0);
+  p.threshold_speed_ego_is_stopped =
+    declare_parameter("lane_following.threshold_speed_ego_is_stopped", 0.3);
+  p.ego_path_lateral_dev_to_execute =
+    declare_parameter("lane_following.ego_path_lateral_dev_to_execute", 1.0);
+  p.threshold_speed_object_is_stopped =
+    declare_parameter("lane_following.threshold_speed_object_is_stopped", 0.5);
+
   return p;
 }
 
@@ -575,13 +587,15 @@ void BehaviorPathPlannerNode::run()
 
   // check if path orientation is valid
   if (!path->points.empty()) {
-    const auto closest_path_point_idx = motion_utils::findNearestIndex(path->points,
-                                                                       planner_data->self_pose->pose.position);
-    const auto yaw_dev = tier4_autoware_utils::calcYawDeviation(path->points.at(closest_path_point_idx).point.pose,
-                                                                planner_data->self_pose->pose);
+    const auto closest_path_point_idx =
+      motion_utils::findNearestIndex(path->points, planner_data->self_pose->pose.position);
+    const auto yaw_dev = tier4_autoware_utils::calcYawDeviation(
+      path->points.at(closest_path_point_idx).point.pose, planner_data->self_pose->pose);
 
     if (std::abs(yaw_dev) > M_PI / 2.0) {
-      RCLCPP_WARN(get_logger(), "Path orientation is invalid. Path yaw deviation: %f (deg)", yaw_dev * 180 / M_PI);
+      RCLCPP_WARN(
+        get_logger(), "Path orientation is invalid. Path yaw deviation: %f (deg)",
+        yaw_dev * 180 / M_PI);
       if (!planner_data_->prev_output_path->points.empty()) {
         path = planner_data_->prev_output_path;
       } else {

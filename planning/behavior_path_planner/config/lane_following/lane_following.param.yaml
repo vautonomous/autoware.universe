@@ -5,3 +5,10 @@
       right_bound_offset: 0.5
       left_bound_offset: 0.5
       lane_change_prepare_duration: 2.0
+
+      # safety check when pull out from bus stop
+      enable_safety_check: true
+      safety_check_backward_distance: 100.0           # [m]
+      threshold_speed_ego_is_stopped: 0.3             # [m/s]
+      ego_path_lateral_dev_to_execute: 1.0            # [m]
+      threshold_speed_object_is_stopped: 0.5          # [m/s]
