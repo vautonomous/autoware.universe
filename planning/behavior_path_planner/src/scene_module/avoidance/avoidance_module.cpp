@@ -2031,15 +2031,17 @@ BehaviorModuleOutput AvoidanceModule::plan()
     prev_linear_shift_path_ = toShiftedPath(avoidance_data_.reference_path);
     path_shifter_.generate(&prev_linear_shift_path_, true, SHIFT_TYPE::LINEAR);
     prev_reference_ = avoidance_data_.reference_path;
-    if (parameters_->publish_debug_marker) {
-      setDebugData(path_shifter_, debug_data_);
-    } else {
-      debug_marker_.markers.clear();
-    }
   }
 
   if (!isSafePath(path_shifter_, avoidance_path)) {
     avoidance_path.path = prev_reference_;
+    insertWaitPoint(avoidance_path);
+  }
+
+  if (parameters_->publish_debug_marker) {
+    setDebugData(path_shifter_, debug_data_);
+  } else {
+    debug_marker_.markers.clear();
   }
 
   BehaviorModuleOutput output;
@@ -2056,8 +2058,6 @@ BehaviorModuleOutput AvoidanceModule::plan()
       avoidance_path.path, parameters_->static_right_expand_bound_offset,
       parameters_->static_left_expand_bound_offset);
   }
-
-
 
   output.path = std::make_shared<PathWithLaneId>(avoidance_path.path);
 
@@ -2373,6 +2373,10 @@ void AvoidanceModule::updateData()
   updateRegisteredObject(avoidance_data_.objects);
   CompensateDetectionLost(avoidance_data_.objects);
 
+  std::sort(avoidance_data_.objects.begin(), avoidance_data_.objects.end(), [](auto a, auto b) {
+    return a.longitudinal < b.longitudinal;
+  });
+
   path_shifter_.setPath(avoidance_data_.reference_path);
 
   // update registered shift point for new reference path & remove past objects
@@ -2592,6 +2596,8 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
   using marker_utils::avoidance_marker::makeOverhangToRoadShoulderMarkerArray;
 
   debug_marker_.markers.clear();
+  const auto & base_link2front = planner_data_->parameters.base_link2front;
+  const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
 
   const auto add = [this](const MarkerArray & added) {
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
@@ -2612,6 +2618,13 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
   add(createPathMarkerArray(path, "centerline_resampled", 0, 0.0, 0.9, 0.5));
   add(createPathMarkerArray(prev_linear_shift_path_.path, "prev_linear_shift", 0, 0.5, 0.4, 0.6));
   add(createPoseMarkerArray(avoidance_data_.reference_pose, "reference_pose", 0, 0.9, 0.3, 0.3));
+
+  // safety check - stop virtual wall
+  if (debug.stop_pose) {
+    const auto p_front =
+      tier4_autoware_utils::calcOffsetPose(debug.stop_pose.get(), base_link2front, 0.0, 0.0);
+    add(motion_utils::createStopVirtualWallMarker(p_front, "avoidance_stop", current_time, 0L));
+  }
 
   add(createLaneletsAreaMarkerArray(*debug.current_lanelets, "current_lanelet", 0.0, 1.0, 0.0));
   add(createLaneletsAreaMarkerArray(*debug.expanded_lanelets, "expanded_lanelet", 0.8, 0.8, 0.0));
@@ -2799,6 +2812,23 @@ bool AvoidanceModule::isSafePath(const PathShifter & path_shifter, ShiftedPath &
     }
   }
   return true;
+}
+
+void AvoidanceModule::insertWaitPoint(ShiftedPath & shifted_path) const
+{
+  const auto & p = parameters_;
+  const auto & data = avoidance_data_;
+  const auto & base_link2front = planner_data_->parameters.base_link2front;
+  auto & path = shifted_path.path;
+
+  if (data.objects.empty()) {
+    return;
+  }
+
+  const auto o_front = data.objects.front();
+  const auto start_longitudinal = o_front.longitudinal - p->safe_stop_distance - base_link2front;
+
+  util::insertDecelPoint(getEgoPosition(), start_longitudinal, 0.0, path, debug_data_.stop_pose);
 }
 
 }  // namespace behavior_path_planner

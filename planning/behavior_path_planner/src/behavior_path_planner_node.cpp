@@ -304,6 +304,7 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   // safety check
   p.enable_safety_check = dp("enable_safety_check", true);
   p.safety_check_backward_distance = dp("safety_check_backward_distance", 100.0);
+  p.safe_stop_distance = dp("safe_stop_distance", 5.0);
 
   return p;
 }

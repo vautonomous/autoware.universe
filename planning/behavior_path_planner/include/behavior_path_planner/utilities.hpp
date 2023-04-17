@@ -454,6 +454,10 @@ bool isCollisionPredictedObjectPath(
 Polygon2d createPolygonWithOffset(
   const Polygon2d & base_polygon, const double & offset);
 
+void insertDecelPoint(
+  const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
+  boost::optional<Pose> & p_out);
+
 }  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_

@@ -302,6 +302,8 @@ private:
     const double backward_distance) const;
 
   bool isSafePath(const PathShifter & path_shifter, ShiftedPath & shifted_path) const;
+
+  void insertWaitPoint(ShiftedPath & shifted_path) const;
 };
 
 }  // namespace behavior_path_planner

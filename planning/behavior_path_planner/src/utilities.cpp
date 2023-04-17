@@ -2437,4 +2437,33 @@ Polygon2d createPolygonWithOffset(const Polygon2d & base_polygon, const double &
   return result.front();
 }
 
+void insertDecelPoint(
+  const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
+  boost::optional<Pose> & p_out)
+{
+  const auto decel_point = motion_utils::calcLongitudinalOffsetPoint(path.points, p_src, offset);
+
+  if (!decel_point) {
+    return;
+  }
+
+  const auto seg_idx = motion_utils::findNearestSegmentIndex(path.points, decel_point.get());
+  const auto insert_idx = motion_utils::insertTargetPoint(seg_idx, decel_point.get(), path.points);
+
+  if (!insert_idx) {
+    return;
+  }
+
+  const auto insertVelocity = [&insert_idx](PathWithLaneId & path, const float v) {
+    for (size_t i = insert_idx.get(); i < path.points.size(); ++i) {
+      const auto & original_velocity = path.points.at(i).point.longitudinal_velocity_mps;
+      path.points.at(i).point.longitudinal_velocity_mps = std::min(original_velocity, v);
+    }
+  };
+
+  insertVelocity(path, velocity);
+
+  p_out = tier4_autoware_utils::getPose(path.points.at(insert_idx.get()));
+}
+
 }  // namespace behavior_path_planner::util

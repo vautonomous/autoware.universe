@@ -168,6 +168,7 @@ struct AvoidanceParameters
   // safety check
   bool enable_safety_check{true};
   double safety_check_backward_distance;
+  double safe_stop_distance;
 };
 
 struct ObjectData  // avoidance target
@@ -314,6 +315,8 @@ struct DebugData
   std::vector<double> neg_shift;
   std::vector<double> total_shift;
   std::vector<double> output_shift;
+
+  boost::optional<Pose> stop_pose{boost::none};
 
   // tmp for plot
   PathWithLaneId center_line;
