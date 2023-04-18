@@ -201,11 +201,11 @@ TurnSignalDecider::getDepartureTurnSignal(const PathWithLaneId &path, const Pose
             util::convertToFrenetCoordinate3d(path, current_pose.position, current_seg_idx);
 
     // Define distance as a dummy value since we won't need it
-    if(vehicle_pose_frenet.distance >= 0.6){
+    if(vehicle_pose_frenet.distance >= 1.0){
         turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
         distance = 0;
     }
-    else if(vehicle_pose_frenet.distance <= -0.6){
+    else if(vehicle_pose_frenet.distance <= -1.0){
         turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
         distance = 0;
     }
