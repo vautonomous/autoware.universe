@@ -172,7 +172,7 @@ TurnSignalDecider::getGoalPoseTurnSignal(const PathWithLaneId &path, const Pose 
             to_goal_point_distance - base_link2front_;
 
     // TODO: Define this threshold as a parameter
-    if(distance_from_vehicle_front <= 10.0){
+    if(distance_from_vehicle_front <= 30.0){
         turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
         distance = distance_from_vehicle_front;
     }else{
