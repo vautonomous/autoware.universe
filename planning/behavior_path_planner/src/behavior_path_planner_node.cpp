@@ -200,7 +200,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.drivable_lane_margin = declare_parameter<double>("drivable_lane_margin");
   p.drivable_area_margin = declare_parameter<double>("drivable_area_margin");
   p.refine_goal_search_radius_range = declare_parameter("refine_goal_search_radius_range", 7.5);
-  p.turn_light_on_threshold_dis_lat = declare_parameter("turn_light_on_threshold_dis_lat", 0.3);
+  p.turn_light_on_threshold_dis_lat = declare_parameter("turn_light_on_threshold_dis_lat", 1.0);
   p.turn_light_on_threshold_dis_long = declare_parameter("turn_light_on_threshold_dis_long", 10.0);
   p.turn_light_on_threshold_time = declare_parameter("turn_light_on_threshold_time", 3.0);
   p.path_interval = declare_parameter<double>("path_interval");

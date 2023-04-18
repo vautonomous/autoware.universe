@@ -279,9 +279,9 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
 
   if (time_to_shift_start < prev_sec || distance_to_shift_start < tl_on_threshold_long) {
     if (diff > tl_on_threshold_lat && cross_line) {
-//      turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+      turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
     } else if (diff < -tl_on_threshold_lat && cross_line) {
-//      turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+      turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
     }
   }
 
