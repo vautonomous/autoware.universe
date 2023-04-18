@@ -296,6 +296,14 @@ private:
   bool expandDrivableArea(
     PathWithLaneId & path_with_lane_id, const double & right_bound_offset,
     const double & left_bound_offset);
+
+  std::pair<lanelet::ConstLanelets, int> getAdjacentLanes(
+    const PathShifter & path_shifter, const double forward_distance,
+    const double backward_distance) const;
+
+  bool isSafePath(const PathShifter & path_shifter, ShiftedPath & shifted_path) const;
+
+  void insertWaitPoint(ShiftedPath & shifted_path) const;
 };
 
 }  // namespace behavior_path_planner

@@ -19,12 +19,14 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <string>
 
 namespace behavior_path_planner
 {
+using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
 struct LaneFollowingParameters
@@ -33,6 +35,13 @@ struct LaneFollowingParameters
   double right_bound_offset;
   double left_bound_offset;
   double lane_change_prepare_duration;
+
+  // safety check when pull out from bus stop
+  bool enable_safety_check{true};
+  double safety_check_backward_distance;
+  double threshold_speed_ego_is_stopped;
+  double ego_path_lateral_dev_to_execute;
+  double threshold_speed_object_is_stopped;
 };
 
 class LaneFollowingModule : public SceneModuleInterface
@@ -56,6 +65,11 @@ private:
 
   PathWithLaneId getReferencePath() const;
   void initParam();
+
+  bool isSafePath(const PathWithLaneId & path) const;
+  static double calcLongitudinalByClosestFootprint(
+    const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos);
+  void insertZeroVelocity(PathWithLaneId & path) const;
 };
 }  // namespace behavior_path_planner
 

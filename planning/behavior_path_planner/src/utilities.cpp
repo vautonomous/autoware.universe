@@ -796,6 +796,60 @@ std::vector<size_t> filterObjectsIndicesByPath(
   return indices;
 }
 
+bool isCollisionPredictedObjectPath(
+  const PredictedObject & object, const PathWithLaneId & ego_path,
+  const lanelet::ConstLanelets & target_lanelets)
+{
+  for (size_t k = 0; k < object.kinematics.predicted_paths.size(); ++k) {
+    const auto & predicted_path = object.kinematics.predicted_paths.at(k);
+    bool skip_pred_path = true;
+    lanelet::BasicPoint2d last_point{
+      predicted_path.path.back().position.x, predicted_path.path.back().position.y};
+
+    for (const auto & lanelet : target_lanelets) {
+      if (lanelet::geometry::inside(lanelet, last_point)) {
+        skip_pred_path = false;
+        break;
+      }
+    }
+
+    if (skip_pred_path) {
+      continue;
+    }
+
+    for (const auto & path_pose : predicted_path.path) {
+      Polygon2d obj_pred_polygon;
+      if (object.shape.type == Shape::BOUNDING_BOX) {
+        const double & len_x = object.shape.dimensions.x;
+        const double & len_y = object.shape.dimensions.y;
+        obj_pred_polygon = convertBoundingBoxObjectToGeometryPolygon(path_pose, len_x, len_y);
+      } else if (object.shape.type == Shape::CYLINDER) {
+        obj_pred_polygon = convertCylindricalObjectToGeometryPolygon(path_pose, object.shape);
+      } else if (object.shape.type == Shape::POLYGON) {
+        obj_pred_polygon = convertPolygonObjectToGeometryPolygon(path_pose, object.shape);
+      } else {
+        RCLCPP_WARN(
+          rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+          "Object shape unknown!");
+        return false;
+      }
+
+      const auto ego_path_point_array = convertToGeometryPointArray(ego_path);
+      LineString2d ego_path_line;
+      for (const auto & point : ego_path_point_array) {
+        boost::geometry::append(ego_path_line, Point2d(point.x, point.y));
+      }
+
+      const auto obj_pred_polygon_with_offset = createPolygonWithOffset(obj_pred_polygon, 2.0);
+
+      if (boost::geometry::intersects(obj_pred_polygon_with_offset, ego_path_line)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 PathWithLaneId removeOverlappingPoints(const PathWithLaneId & input_path)
 {
   PathWithLaneId filtered_path;
@@ -2360,4 +2414,56 @@ bool isSafeInFreeSpaceCollisionCheck(
   }
   return true;
 }
+
+Polygon2d createPolygonWithOffset(const Polygon2d & base_polygon, const double & offset)
+{
+  auto base_polygon_copy = base_polygon;
+  bg::correct(base_polygon_copy);
+
+  typedef double coordinate_type;
+  const double buffer_distance = offset;
+  const int points_per_circle = 36;
+  boost::geometry::strategy::buffer::distance_symmetric<coordinate_type> distance_strategy(
+    buffer_distance);
+  boost::geometry::strategy::buffer::join_round join_strategy(points_per_circle);
+  boost::geometry::strategy::buffer::end_round end_strategy(points_per_circle);
+  boost::geometry::strategy::buffer::point_circle circle_strategy(points_per_circle);
+  boost::geometry::strategy::buffer::side_straight side_strategy;
+  boost::geometry::model::multi_polygon<Polygon2d> result;
+  // Create the buffer of a multi polygon
+  boost::geometry::buffer(
+    base_polygon_copy, result, distance_strategy, side_strategy, join_strategy, end_strategy,
+    circle_strategy);
+  return result.front();
+}
+
+void insertDecelPoint(
+  const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
+  boost::optional<Pose> & p_out)
+{
+  const auto decel_point = motion_utils::calcLongitudinalOffsetPoint(path.points, p_src, offset);
+
+  if (!decel_point) {
+    return;
+  }
+
+  const auto seg_idx = motion_utils::findNearestSegmentIndex(path.points, decel_point.get());
+  const auto insert_idx = motion_utils::insertTargetPoint(seg_idx, decel_point.get(), path.points);
+
+  if (!insert_idx) {
+    return;
+  }
+
+  const auto insertVelocity = [&insert_idx](PathWithLaneId & path, const float v) {
+    for (size_t i = insert_idx.get(); i < path.points.size(); ++i) {
+      const auto & original_velocity = path.points.at(i).point.longitudinal_velocity_mps;
+      path.points.at(i).point.longitudinal_velocity_mps = std::min(original_velocity, v);
+    }
+  };
+
+  insertVelocity(path, velocity);
+
+  p_out = tier4_autoware_utils::getPose(path.points.at(insert_idx.get()));
+}
+
 }  // namespace behavior_path_planner::util
