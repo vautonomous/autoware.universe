@@ -308,6 +308,7 @@ private:
   void insertWaitPoint(ShiftedPath & shifted_path) const;
 
   bool is_yielding_;
+  rclcpp::Time last_yielding;
 };
 
 }  // namespace behavior_path_planner

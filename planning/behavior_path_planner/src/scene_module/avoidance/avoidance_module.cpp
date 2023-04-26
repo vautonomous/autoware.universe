@@ -2038,9 +2038,17 @@ BehaviorModuleOutput AvoidanceModule::plan()
 
   if (should_yield || is_yielding_) {
     if (is_safe_path) {
-      is_yielding_ = false;
+      auto yield_duration = (clock_->now() - last_yielding).seconds();
+
+      if(yield_duration > 2.0){
+        is_yielding_ = false;
+      }else{
+        avoidance_path.path = prev_reference_;
+        insertWaitPoint(avoidance_path);
+      }
     } else {
       is_yielding_ = true;
+      last_yielding = clock_->now();
       avoidance_path.path = prev_reference_;
       insertWaitPoint(avoidance_path);
     }
