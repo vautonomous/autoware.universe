@@ -177,6 +177,8 @@ private:
   void updateRegisteredRawShiftPoints();
 
   // -- for state management --
+  bool is_avoidance_maneuver_starts;
+  bool isAvoidanceManeuverRunning();
   bool isAvoidancePlanRunning() const;
 
   // -- for pre-processing --
@@ -304,6 +306,8 @@ private:
   bool isSafePath(const PathShifter & path_shifter, ShiftedPath & shifted_path) const;
 
   void insertWaitPoint(ShiftedPath & shifted_path) const;
+
+  bool is_yielding_;
 };
 
 }  // namespace behavior_path_planner

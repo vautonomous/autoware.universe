@@ -2033,9 +2033,17 @@ BehaviorModuleOutput AvoidanceModule::plan()
     prev_reference_ = avoidance_data_.reference_path;
   }
 
-  if (!isSafePath(path_shifter_, avoidance_path)) {
-    avoidance_path.path = prev_reference_;
-    insertWaitPoint(avoidance_path);
+  bool is_safe_path = isSafePath(path_shifter_, avoidance_path);
+  bool should_yield = !is_safe_path && !isAvoidanceManeuverRunning();
+
+  if (should_yield || is_yielding_) {
+    if (is_safe_path) {
+      is_yielding_ = false;
+    } else {
+      is_yielding_ = true;
+      avoidance_path.path = prev_reference_;
+      insertWaitPoint(avoidance_path);
+    }
   }
 
   if (parameters_->publish_debug_marker) {
@@ -2498,6 +2506,8 @@ void AvoidanceModule::onEntry()
   DEBUG_PRINT("AVOIDANCE onEntry. wait approval!");
   initVariables();
   current_state_ = BT::NodeStatus::SUCCESS;
+  is_avoidance_maneuver_starts = false;
+  is_yielding_ = false;
 }
 
 void AvoidanceModule::onExit()
@@ -2829,6 +2839,19 @@ void AvoidanceModule::insertWaitPoint(ShiftedPath & shifted_path) const
   const auto start_longitudinal = o_front.longitudinal - p->safe_stop_distance - base_link2front;
 
   util::insertDecelPoint(getEgoPosition(), start_longitudinal, 0.0, path, debug_data_.stop_pose);
+}
+
+bool AvoidanceModule::isAvoidanceManeuverRunning()
+{
+  const auto path_idx = avoidance_data_.ego_closest_path_index;
+
+  for (const auto & al : registered_raw_shift_points_) {
+    if (path_idx > al.start_idx || is_avoidance_maneuver_starts) {
+      is_avoidance_maneuver_starts = true;
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // namespace behavior_path_planner

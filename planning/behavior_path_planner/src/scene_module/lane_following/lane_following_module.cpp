@@ -54,8 +54,6 @@ BehaviorModuleOutput LaneFollowingModule::plan()
 
   auto ref_path = getReferencePath();
 
-  std::cout << "isSafePath(ref_path): " << isSafePath(ref_path) << std::endl;
-
   if (!isSafePath(ref_path)) {
     insertZeroVelocity(ref_path);
   }
