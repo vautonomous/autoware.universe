@@ -47,7 +47,7 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
 
   // If the distance to goal point is nearer than path change point,
   // use turn signal for stopping at the goal point
-  const auto approaching_goal_point_result = getGoalPoseTurnSignal(path, current_pose, route_handler);
+  const auto approaching_goal_point_result = getGoalPoseTurnSignal(path, current_pose, current_seg_idx);
   const auto approaching_goal_point_turn_signal = approaching_goal_point_result.first;
   const auto approaching_goal_point_distance = approaching_goal_point_result.second;
 
@@ -151,7 +151,7 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
 
 std::pair<TurnIndicatorsCommand, double>
 TurnSignalDecider::getGoalPoseTurnSignal(const PathWithLaneId &path, const Pose &current_pose,
-                                         const RouteHandler &route_handler) const {
+                                         const size_t current_seg_idx) const {
 
     // This function is designed for right-handed traffic, it will automatically enable Right turn signal
     // to approach goal points
@@ -162,14 +162,22 @@ TurnSignalDecider::getGoalPoseTurnSignal(const PathWithLaneId &path, const Pose 
     if (path.points.empty()) {
         return std::make_pair(turn_signal, distance);
     }
+    // Get frenet coordinate of current_pose on path
+    const auto vehicle_pose_frenet =
+            util::convertToFrenetCoordinate3d(path, current_pose.position, current_seg_idx);
 
-    auto goal_pose = route_handler.getGoalPose();
+    double accumulated_distance = 0;
+    auto prev_point = path.points.front();
+    auto lane_attribute = std::string("none");
 
-    const double to_goal_point_distance =
-            tier4_autoware_utils::calcDistance3d(current_pose.position, goal_pose.position);
+    for (const auto & path_point : path.points) {
+        const double path_point_distance =
+                tier4_autoware_utils::calcDistance3d(prev_point.point, path_point.point);
+        accumulated_distance += path_point_distance;
+        prev_point = path_point;
+    }
 
-    const double distance_from_vehicle_front =
-            to_goal_point_distance - base_link2front_;
+    const double distance_from_vehicle_front = accumulated_distance - vehicle_pose_frenet.length - base_link2front_;
 
     // TODO: Define this threshold as a parameter
     if(distance_from_vehicle_front <= 30.0){
@@ -179,6 +187,7 @@ TurnSignalDecider::getGoalPoseTurnSignal(const PathWithLaneId &path, const Pose 
         turn_signal.command = TurnIndicatorsCommand::DISABLE;
         distance = std::numeric_limits<double>::max();
     }
+
     return std::make_pair(turn_signal, distance);
     }
 

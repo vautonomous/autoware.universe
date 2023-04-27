@@ -51,7 +51,7 @@ private:
     const RouteHandler & route_handler) const;
 
   std::pair<TurnIndicatorsCommand, double> getGoalPoseTurnSignal(const PathWithLaneId &path, const Pose &current_pose,
-                                                                 const RouteHandler &route_handler) const;
+                                                                 const size_t current_seg_idx) const;
   std::pair<TurnIndicatorsCommand, double> getDepartureTurnSignal(const PathWithLaneId &path, const Pose &current_pose,
                                                                   const size_t current_seg_idx) const;
   rclcpp::Logger logger_{
