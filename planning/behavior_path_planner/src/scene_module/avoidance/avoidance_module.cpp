@@ -2033,8 +2033,9 @@ BehaviorModuleOutput AvoidanceModule::plan()
     prev_reference_ = avoidance_data_.reference_path;
   }
 
+  auto self_speed = planner_data_->self_odometry->twist.twist.linear.x;
   bool is_safe_path = isSafePath(path_shifter_, avoidance_path);
-  bool should_yield = !is_safe_path && !isAvoidanceManeuverRunning();
+  bool should_yield = !is_safe_path && (!isAvoidanceManeuverRunning() || self_speed < 0.3);
 
   if (should_yield || is_yielding_) {
     if (is_safe_path) {

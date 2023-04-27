@@ -10,7 +10,7 @@
       # safety check
       enable_safety_check: true
       safety_check_backward_distance: 100.0           # [m]
-      safe_stop_distance: 5.0                         # [m]
+      safe_stop_distance: 7.0                         # [m]
 
       enable_avoidance_over_same_direction: true
       enable_avoidance_over_opposite_direction: true
@@ -20,13 +20,13 @@
       object_check_forward_distance: 50.0        # [m]
       object_check_backward_distance: 2.0         # [m]
       lateral_collision_margin: 0.5               # [m]
-      lateral_collision_safety_buffer: 0.1        # [m]
+      lateral_collision_safety_buffer: 0.3        # [m]
 
       prepare_time: 2.0                           # [s]
       min_prepare_distance: 1.0                   # [m]
       min_avoidance_distance: 10.0                # [m]
 
-      min_nominal_avoidance_speed: 5.0  # [m/s]
+      min_nominal_avoidance_speed: 2.5  # [m/s]
       min_sharp_avoidance_speed: 1.0    # [m/s]
 
       road_shoulder_safety_margin: 0.01 # [m]
@@ -34,8 +34,8 @@
       max_right_shift_length: 3.0 # [m]
       max_left_shift_length: 3.0 # [m]
 
-      nominal_lateral_jerk: 0.01   # [m/s3]
-      max_lateral_jerk: 0.05       # [m/s3]
+      nominal_lateral_jerk: 0.06   # [m/s3]
+      max_lateral_jerk: 0.1       # [m/s3]
 
       object_last_seen_threshold: 2.0   # [s]
 
