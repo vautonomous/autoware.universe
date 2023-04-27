@@ -389,6 +389,8 @@ Polygon2d convertBoundingBoxObjectToGeometryPolygon(
 Polygon2d convertCylindricalObjectToGeometryPolygon(
   const Pose & current_pose, const Shape & obj_shape);
 
+Polygon2d getPathPointPolygon(const Pose & pp, const double shift_to_outside);
+
 Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const Shape & obj_shape);
 
 std::string getUuidStr(const PredictedObject & obj);
@@ -457,6 +459,8 @@ Polygon2d createPolygonWithOffset(
 void insertDecelPoint(
   const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
   boost::optional<Pose> & p_out);
+
+bool isConflicting(const Polygon2d & pp_poly, const lanelet::ConstLanelets & lls);
 
 }  // namespace behavior_path_planner::util
 

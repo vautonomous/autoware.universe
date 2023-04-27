@@ -2072,6 +2072,56 @@ Polygon2d convertCylindricalObjectToGeometryPolygon(
   return object_polygon;
 }
 
+Polygon2d getPathPointPolygon(const Pose & pp, const double shift_to_outside)
+{
+  Polygon2d pp_polygon;
+
+  const double pp_x = pp.position.x;
+  const double pp_y = pp.position.y;
+
+  constexpr int N = 20;
+  const double r = shift_to_outside;
+  for (int i = 0; i < N; ++i) {
+    pp_polygon.outer().emplace_back(
+      pp_x + r * std::cos(2.0 * M_PI / N * i), pp_y + r * std::sin(2.0 * M_PI / N * i));
+  }
+
+  pp_polygon.outer().push_back(pp_polygon.outer().front());
+
+  bg::correct(pp_polygon);
+  return pp_polygon;
+}
+
+bool isConflicting(const Polygon2d & pp_poly, const lanelet::ConstLanelets & lls)
+{
+  if (lls.empty()) {
+    return false;
+  }
+
+  for (const auto & ll : lls) {
+    // create lanelet polygon
+    const auto & polygon2d = lanelet::utils::to2D(ll).polygon2d();
+    if (polygon2d.empty()) {
+      // no lanelet polygon
+      return false;
+    }
+
+    Polygon2d lanelet_polygon;
+    for (const auto & lanelet_point : polygon2d) {
+      lanelet_polygon.outer().emplace_back(lanelet_point.x(), lanelet_point.y());
+    }
+
+    lanelet_polygon.outer().push_back(lanelet_polygon.outer().front());
+    bg::correct(lanelet_polygon);
+
+    if (bg::intersects(lanelet_polygon, pp_poly)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const Shape & obj_shape)
 {
   Polygon2d object_polygon;

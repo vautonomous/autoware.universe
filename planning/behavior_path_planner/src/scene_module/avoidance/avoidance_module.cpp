@@ -2040,9 +2040,9 @@ BehaviorModuleOutput AvoidanceModule::plan()
     if (is_safe_path) {
       auto yield_duration = (clock_->now() - last_yielding).seconds();
 
-      if(yield_duration > 2.0){
+      if (yield_duration > 2.0) {
         is_yielding_ = false;
-      }else{
+      } else {
         avoidance_path.path = prev_reference_;
         insertWaitPoint(avoidance_path);
       }
@@ -2560,7 +2560,7 @@ bool AvoidanceModule::isTargetObjectType(const PredictedObject & object) const
   return is_object_type;
 }
 
-TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) const
+TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path)
 {
   TurnSignalInfo turn_signal;
 
@@ -2571,9 +2571,9 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
 
   const auto latest_shift_point = shift_points.front();  // assuming it is sorted.
 
-  const auto turn_info = util::getPathTurnSignal(
+  const auto turn_info = getPathTurnSignalLaneChange(
     avoidance_data_.current_lanelets, path, latest_shift_point, planner_data_->self_pose->pose,
-    planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters);
+    planner_data_->parameters);
 
   // Set turn signal if the vehicle across the lane.
   if (!path.shift_length.empty()) {
@@ -2796,6 +2796,60 @@ std::pair<lanelet::ConstLanelets, int> AvoidanceModule::getAdjacentLanes(
   return std::make_pair(check_lanes, lane_direction);
 }
 
+lanelet::ConstLanelets AvoidanceModule::getAdjacentLanes(
+  const ShiftPoint & shift_point, const double forward_distance,
+  const double backward_distance) const
+{
+  const auto & rh = planner_data_->route_handler;
+
+  bool has_left_shift = false;
+  bool has_right_shift = false;
+
+  if (shift_point.length > 0.01) {
+    has_left_shift = true;
+  }
+
+  if (shift_point.length < -0.01) {
+    has_right_shift = true;
+  }
+
+  lanelet::ConstLanelet current_lane;
+  lanelet::ConstLanelets check_lanes{};
+  if (!rh->getClosestLaneletWithinRoute(getEgoPose().pose, &current_lane)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("behavior_path_planner").get_child("avoidance"),
+      "failed to find closest lanelet within route!!!");
+    return check_lanes;  // TODO(Satoshi Ota)
+  }
+
+  const auto ego_succeeding_lanes =
+    rh->getLaneletSequence(current_lane, getEgoPose().pose, backward_distance, forward_distance);
+
+  for (const auto & lane : ego_succeeding_lanes) {
+    const auto opt_left_lane = rh->getLeftLanelet(lane);
+    if (has_left_shift && opt_left_lane) {
+      check_lanes.push_back(opt_left_lane.get());
+    }
+
+    const auto opt_right_lane = rh->getRightLanelet(lane);
+    if (has_right_shift && opt_right_lane) {
+      check_lanes.push_back(opt_right_lane.get());
+    }
+
+    const auto left_opposite_lanes = rh->getLeftOppositeLanelets(lane);
+    if (has_left_shift && !left_opposite_lanes.empty()) {
+      check_lanes.push_back(left_opposite_lanes.front());
+    }
+
+    const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
+    if (has_right_shift && !right_opposite_lanes.empty()) {
+      check_lanes.push_back(right_opposite_lanes.front());
+    }
+  }
+
+  return check_lanes;
+}
+
 bool AvoidanceModule::isSafePath(const PathShifter & path_shifter, ShiftedPath & shifted_path) const
 {
   const auto & p = parameters_;
@@ -2860,6 +2914,67 @@ bool AvoidanceModule::isAvoidanceManeuverRunning()
     }
   }
   return false;
+}
+
+std::pair<TurnIndicatorsCommand, double> AvoidanceModule::getPathTurnSignalLaneChange(
+  const lanelet::ConstLanelets & current_lanes, const ShiftedPath & path,
+  const ShiftPoint & shift_point, const Pose & pose,
+  const BehaviorPathPlannerParameters & common_parameter)
+{
+  TurnIndicatorsCommand turn_signal;
+  turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
+  const double max_distance = std::numeric_limits<double>::max();
+  if (path.shift_length.empty()) {
+    return std::make_pair(turn_signal, max_distance);
+  }
+  const auto base_link2front = common_parameter.base_link2front;
+  const auto vehicle_width = common_parameter.vehicle_width;
+  const auto shift_to_outside = vehicle_width / 2;
+  const auto arc_position_current_pose = lanelet::utils::getArcCoordinates(current_lanes, pose);
+
+  const auto & forward_check_distance = parameters_->object_check_forward_distance;
+  const auto & backward_check_distance = parameters_->safety_check_backward_distance;
+  const auto adjacent_lanes =
+    getAdjacentLanes(shift_point, forward_check_distance, backward_check_distance);
+
+  if (adjacent_lanes.empty()) {
+    return std::make_pair(turn_signal, max_distance);
+  }
+
+  for (size_t i = shift_point.start_idx; i < shift_point.end_idx; i++) {
+    const auto & pp = path.path.points.at(i);
+
+    auto pp_polygon = util::getPathPointPolygon(pp.point.pose, shift_to_outside);
+
+    auto is_conflicting = util::isConflicting(pp_polygon, adjacent_lanes);
+
+    if (is_conflicting) {
+      if (shift_point.length > 0.01) {
+        turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+        break;
+      }
+
+      if (shift_point.length < -0.01) {
+        turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+        break;
+      }
+    }
+  }
+
+  // calc distance from ego vehicle front to shift end point.
+  double distance_from_vehicle_front;
+  {
+    const auto arc_position_shift_end =
+      lanelet::utils::getArcCoordinates(current_lanes, shift_point.end);
+    distance_from_vehicle_front =
+      arc_position_shift_end.length - arc_position_current_pose.length - base_link2front;
+  }
+
+  if (distance_from_vehicle_front >= 0.0) {
+    return std::make_pair(turn_signal, distance_from_vehicle_front);
+  }
+
+  return std::make_pair(turn_signal, max_distance);
 }
 
 }  // namespace behavior_path_planner

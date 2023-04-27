@@ -255,7 +255,7 @@ private:
   void postProcess(PathShifter & shifter) const;
 
   // turn signal
-  TurnSignalInfo calcTurnSignalInfo(const ShiftedPath & path) const;
+  TurnSignalInfo calcTurnSignalInfo(const ShiftedPath & path);
 
   // intersection (old)
   boost::optional<AvoidPoint> calcIntersectionShiftPoint(const AvoidancePlanningData & data) const;
@@ -309,6 +309,15 @@ private:
 
   bool is_yielding_;
   rclcpp::Time last_yielding;
+
+  std::pair<TurnIndicatorsCommand, double> getPathTurnSignalLaneChange(
+    const lanelet::ConstLanelets & current_lanes, const ShiftedPath & path,
+    const ShiftPoint & shift_point, const Pose & pose,
+    const BehaviorPathPlannerParameters & common_parameter);
+
+  lanelet::ConstLanelets getAdjacentLanes(
+    const ShiftPoint & shift_point, const double forward_distance,
+    const double backward_distance) const;
 };
 
 }  // namespace behavior_path_planner
