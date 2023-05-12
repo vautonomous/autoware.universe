@@ -14,7 +14,7 @@
 
       # params for detection area
       detection_area:
-        lateral_margin: 0.0                  # margin of vehicle footprint [m]
+        lateral_margin: 0.3                  # margin of vehicle footprint [m]
         step_length: 1.0                     # step length for pointcloud search range [m]
         extend_distance: 0.0                 # extend trajectory to consider after goal obstacle in the extend_distance [m]
 

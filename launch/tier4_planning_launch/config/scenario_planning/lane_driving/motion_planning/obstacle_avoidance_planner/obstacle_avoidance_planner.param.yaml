@@ -114,7 +114,7 @@
           soft_avoidance_weight: 1000.0 # slack weight for lateral error around the middle point
           soft_second_avoidance_weight: 100.0 # slack weight for lateral error around the middle point
 
-          lat_error_weight: 100.0 # weight for lateral error
+          lat_error_weight: 1500.0 # weight for lateral error
           yaw_error_weight: 0.0 # weight for yaw error
           yaw_error_rate_weight: 0.0 # weight for yaw error rate
           steer_input_weight: 1000.0 # weight for steering input

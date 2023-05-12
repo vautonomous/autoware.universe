@@ -10,7 +10,7 @@
       BICYCLE : false
       PEDESTRIAN : false
 
-    upper_bound_x: 100.0
+    upper_bound_x: 30.0
     lower_bound_x: 0.0
-    upper_bound_y: 10.0
-    lower_bound_y: -10.0
+    upper_bound_y: 6.0
+    lower_bound_y: -6.0

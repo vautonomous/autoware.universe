@@ -4,8 +4,8 @@
     avoidance:
       resample_interval_for_planning: 0.3
       resample_interval_for_output: 4.0
-      detection_area_right_expand_dist: 0.1
-      detection_area_left_expand_dist: 0.1
+      detection_area_right_expand_dist: 0.0
+      detection_area_left_expand_dist: 0.0
 
       # safety check
       enable_safety_check: true
@@ -19,7 +19,7 @@
       threshold_speed_object_is_stopped: 0.5      # [m/s]
       object_check_forward_distance: 50.0        # [m]
       object_check_backward_distance: 2.0         # [m]
-      lateral_collision_margin: 0.5               # [m]
+      lateral_collision_margin: 0.25               # [m]
       lateral_collision_safety_buffer: 0.3        # [m]
 
       prepare_time: 2.0                           # [s]
@@ -31,11 +31,11 @@
 
       road_shoulder_safety_margin: 0.01 # [m]
 
-      max_right_shift_length: 3.0 # [m]
-      max_left_shift_length: 3.0 # [m]
+      max_right_shift_length: 1.0 # [m]
+      max_left_shift_length: 1.0 # [m]
 
-      nominal_lateral_jerk: 0.06   # [m/s3]
-      max_lateral_jerk: 0.1       # [m/s3]
+      nominal_lateral_jerk: 0.02   # [m/s3]
+      max_lateral_jerk: 0.04       # [m/s3]
 
       object_last_seen_threshold: 2.0   # [s]
 
@@ -67,5 +67,5 @@
 
       # static expansion of drivable_area
       static_expand_drivable_area: true
-      static_right_bound_offset: 2.8
-      static_left_bound_offset: 2.8
+      static_right_bound_offset: 1.0
+      static_left_bound_offset: 1.0
